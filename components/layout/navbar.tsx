@@ -6,7 +6,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BookOpen, Users, LayoutDashboard, FileText, GraduationCap } from 'lucide-react';
+import { BookOpen, Users, LayoutDashboard, FileText, GraduationCap, Calendar } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
@@ -24,6 +24,16 @@ const navItems = [
     label: 'Cours',
     href: '/cours',
     icon: BookOpen,
+  },
+  {
+    label: 'Sessions',
+    href: '/sessions',
+    icon: Calendar,
+  },
+  {
+    label: 'Inscriptions',
+    href: '/inscriptions',
+    icon: FileText,
   },
   {
     label: 'Étudiants',

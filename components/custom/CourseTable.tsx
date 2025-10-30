@@ -11,17 +11,43 @@ import { DataTable } from '@/components/data-table';
 import { AirtableRecord, CoursFields } from '@/lib/airtable';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Eye } from 'lucide-react';
+import { Eye, Edit, Trash2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { toast } from 'sonner';
 
 interface CourseTableProps {
   courses: AirtableRecord<CoursFields>[];
+  onEdit?: (cours: AirtableRecord<CoursFields>) => void;
+  onRefetch?: () => void;
 }
 
-export function CourseTable({ courses }: CourseTableProps) {
+export function CourseTable({ courses, onEdit, onRefetch }: CourseTableProps) {
   const router = useRouter();
+
+  const handleDelete = async (coursId: string) => {
+    if (!confirm('Êtes-vous sûr de vouloir supprimer ce cours ?')) return;
+
+    try {
+      const res = await fetch('/api/airtable', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tableName: 'Cours',
+          recordId: coursId,
+        }),
+      });
+
+      if (!res.ok) throw new Error('Erreur lors de la suppression');
+
+      toast.success('Cours supprimé avec succès');
+      if (onRefetch) onRefetch();
+    } catch (error) {
+      console.error('Erreur suppression:', error);
+      toast.error('Erreur lors de la suppression du cours');
+    }
+  };
 
   const columns: ColumnDef<AirtableRecord<CoursFields>>[] = [
     {
@@ -110,22 +136,37 @@ export function CourseTable({ courses }: CourseTableProps) {
         const courseId = row.original.id;
         
         return (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              console.log('[CourseTable] Navigation vers cours:', courseId);
-              if (!courseId || courseId === 'undefined') {
-                console.error('[CourseTable] ID de cours invalide:', row.original);
-                alert('Erreur: ID de cours invalide');
-                return;
-              }
-              router.push(`/cours/${courseId}`);
-            }}
-          >
-            <Eye className="h-4 w-4 mr-2" />
-            Voir détails
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                if (!courseId || courseId === 'undefined') {
+                  alert('Erreur: ID de cours invalide');
+                  return;
+                }
+                router.push(`/cours/${courseId}`);
+              }}
+            >
+              <Eye className="h-4 w-4" />
+            </Button>
+            {onEdit && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onEdit(row.original)}
+              >
+                <Edit className="h-4 w-4" />
+              </Button>
+            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => handleDelete(courseId)}
+            >
+              <Trash2 className="h-4 w-4 text-destructive" />
+            </Button>
+          </div>
         );
       },
     },
