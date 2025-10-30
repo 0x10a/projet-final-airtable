@@ -123,11 +123,13 @@ export async function getRecords<T extends FieldSet = BaseFields>(
     
     await query.eachPage((pageRecords, fetchNextPage) => {
       pageRecords.forEach((record) => {
-        records.push({
-          id: record.id,
-          fields: record.fields as T,
-          createdTime: record.get('Created') as string | undefined,
-        });
+        if (record && record.id) {
+          records.push({
+            id: record.id,
+            fields: record.fields as T,
+            createdTime: record.get('Created') as string | undefined,
+          });
+        }
       });
       fetchNextPage();
     });
@@ -150,9 +152,12 @@ export async function getRecord<T extends FieldSet = BaseFields>(
   recordId: string
 ): Promise<AirtableRecord<T>> {
   try {
+    if (!tableName || !recordId || recordId === 'undefined' || recordId === 'null') {
+      throw new Error(`Paramètres invalides: tableName="${tableName}", recordId="${recordId}"`);
+    }
+    
     const record = await base(tableName).find(recordId);
     
-    // Vérifier que le record existe
     if (!record || !record.id) {
       throw new Error(`Record ${recordId} introuvable dans ${tableName}`);
     }
@@ -163,8 +168,8 @@ export async function getRecord<T extends FieldSet = BaseFields>(
       createdTime: record.get('Created') as string | undefined,
     };
   } catch (error) {
-    console.error(`Erreur lors de la récupération du record ${recordId}:`, error);
-    throw new Error(`Record ${recordId} introuvable dans ${tableName}`);
+    console.error(`Erreur getRecord: ${error}`);
+    throw error;
   }
 }
 

@@ -10,12 +10,21 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 
 export default async function CoursPage() {
   // Récupérer tous les cours depuis Airtable (SSR)
-  const courses = await getRecords<CoursFields>(
-    process.env.AIRTABLE_TABLE_COURS || 'Cours',
-    {
-      sort: [{ field: 'Date de début', direction: 'desc' }],
-    }
-  );
+  let courses: Array<{ id: string; fields: CoursFields }> = [];
+  
+  try {
+    const result = await getRecords<CoursFields>(
+      process.env.AIRTABLE_TABLE_COURS || 'Cours',
+      {
+        sort: [{ field: 'Date de début', direction: 'desc' }],
+      }
+    );
+    
+    // Filtrer les records invalides (sans id valide)
+    courses = result.filter(c => c && c.id && c.id !== 'undefined' && c.id !== 'null');
+  } catch (error) {
+    console.error('Erreur lors du chargement des cours:', error);
+  }
 
   return (
     <div className="container mx-auto py-10 space-y-8">

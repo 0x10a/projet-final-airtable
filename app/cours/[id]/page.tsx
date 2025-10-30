@@ -22,13 +22,14 @@ import {
 } from '@/components/ui/table';
 
 interface CourseDetailPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export default async function CourseDetailPage({ params }: CourseDetailPageProps) {
-  const { id } = params;
+  // Next.js 15: params est maintenant une Promise
+  const { id } = await params;
 
   // Récupérer les détails du cours
   const course = await getRecord<CoursFields>(
@@ -47,7 +48,7 @@ export default async function CourseDetailPage({ params }: CourseDetailPageProps
   // Récupérer les étudiants inscrits
   const etudiantIds = inscriptions
     .map(i => i.fields.Étudiant?.[0])
-    .filter(Boolean) as string[];
+    .filter(id => id && id !== 'undefined' && id !== 'null') as string[]; // Filtrer les IDs invalides
 
   const etudiants = etudiantIds.length > 0
     ? (await Promise.all(
@@ -66,7 +67,9 @@ export default async function CourseDetailPage({ params }: CourseDetailPageProps
     : [];
 
   // Récupérer les sessions du cours
-  const sessionIds = course.fields.Sessions || [];
+  const sessionIds = (course.fields.Sessions || [])
+    .filter(id => id && id !== 'undefined' && id !== 'null'); // Filtrer les IDs invalides
+  
   const sessions = sessionIds.length > 0
     ? (await Promise.all(
         sessionIds.map(async sessionId => {

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/providers";
+import { Navbar } from "@/components/layout/navbar";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -14,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Airtable Dashboard - Next.js 15",
-  description: "Gestion de base de données Airtable avec Next.js, TypeScript et shadcn/ui",
+  title: "Design.academy - Gestion de Formation",
+  description: "Plateforme de gestion de formation avec Airtable",
 };
 
 export default function RootLayout({
@@ -29,7 +30,10 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <Providers>
-          {children}
+          <Navbar />
+          <main className="min-h-screen">
+            {children}
+          </main>
         </Providers>
       </body>
     </html>

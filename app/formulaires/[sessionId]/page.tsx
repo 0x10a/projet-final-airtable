@@ -12,13 +12,14 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
 interface EmargementPageProps {
-  params: {
+  params: Promise<{
     sessionId: string;
-  };
+  }>;
 }
 
 export default async function EmargementPage({ params }: EmargementPageProps) {
-  const { sessionId } = params;
+  // Next.js 15: params est maintenant une Promise
+  const { sessionId } = await params;
 
   // Récupérer la session
   const session = await getRecord<SessionFields>(

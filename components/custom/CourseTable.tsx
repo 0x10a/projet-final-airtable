@@ -107,11 +107,21 @@ export function CourseTable({ courses }: CourseTableProps) {
       id: 'actions',
       header: 'Actions',
       cell: ({ row }) => {
+        const courseId = row.original.id;
+        
         return (
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => router.push(`/cours/${row.original.id}`)}
+            onClick={() => {
+              console.log('[CourseTable] Navigation vers cours:', courseId);
+              if (!courseId || courseId === 'undefined') {
+                console.error('[CourseTable] ID de cours invalide:', row.original);
+                alert('Erreur: ID de cours invalide');
+                return;
+              }
+              router.push(`/cours/${courseId}`);
+            }}
           >
             <Eye className="h-4 w-4 mr-2" />
             Voir détails
