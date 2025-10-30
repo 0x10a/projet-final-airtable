@@ -3,283 +3,448 @@
  * Vue synthèse avec statistiques, graphiques de présence, et accès rapides
  */
 
-import { getRecords } from '@/lib/airtable';
-import type {
-  EtudiantFields,
-  CoursFields,
-  SessionFields,
-  PresenceFields,
-} from '@/lib/airtable';
+'use client';
+
+import { useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { DashboardCards } from '@/components/custom/DashboardCards';
 import { AttendanceChart } from '@/components/custom/AttendanceChart';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { BookOpen, Calendar, Users, FileText } from 'lucide-react';
-import { format, isFuture, parseISO } from 'date-fns';
+import { BookOpen, Calendar, Users, FileText, TrendingUp, AlertTriangle, Award, CheckCircle2 } from 'lucide-react';
+import { format, isFuture, parseISO, subDays, startOfMonth } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 
-export default async function DashboardPage() {
-  // Récupérer toutes les données nécessaires (SSR)
-  let etudiants: Array<{ id: string; fields: EtudiantFields }> = [];
-  let cours: Array<{ id: string; fields: CoursFields }> = [];
-  let sessions: Array<{ id: string; fields: SessionFields }> = [];
-  let presences: Array<{ id: string; fields: PresenceFields }> = [];
-  
-  try {
-    const results = await Promise.all([
-      getRecords<EtudiantFields>(process.env.AIRTABLE_TABLE_ETUDIANTS || 'Étudiants'),
-      getRecords<CoursFields>(process.env.AIRTABLE_TABLE_COURS || 'Cours'),
-      getRecords<SessionFields>(process.env.AIRTABLE_TABLE_SESSIONS || 'Sessions', {
-        sort: [{ field: 'Date de la session', direction: 'desc' }],
-      }),
-      getRecords<PresenceFields>(process.env.AIRTABLE_TABLE_PRESENCES || 'Présences'),
-    ]);
-    
-    // Filtrer les records invalides (sans id)
-    etudiants = (results[0] || []).filter(e => e && e.id);
-    cours = (results[1] || []).filter(c => c && c.id);
-    sessions = (results[2] || []).filter(s => s && s.id);
-    presences = (results[3] || []).filter(p => p && p.id);
-  } catch (error) {
-    console.error('Erreur lors du chargement des données:', error);
-    // Les tableaux vides sont déjà initialisés
-  }
+interface Etudiant {
+  id: string;
+  fields: {
+    Prénom: string;
+    Nom: string;
+    Email: string;
+  };
+}
 
-  // Calculer les statistiques
-  const totalEtudiants = etudiants.length;
-  const totalCours = cours.length;
+interface Cours {
+  id: string;
+  fields: {
+    'Nom du cours': string;
+    Sessions?: string[];
+  };
+}
 
-  // Sessions à venir
-  const sessionsAVenir = sessions.filter(s => {
-    const date = s.fields['Date de la session'];
-    return date && isFuture(parseISO(date));
-  }).length;
+interface Session {
+  id: string;
+  fields: {
+    'Nom de la session': string;
+    'Date de la session': string;
+    Cours?: string[];
+    Présences?: string[];
+  };
+}
 
-  // Taux de présence moyen
-  const totalPresences = presences.length;
-  const presentsCount = presences.filter(p => p.fields['Présent ?']).length;
-  const tauxPresence = totalPresences > 0 ? (presentsCount / totalPresences) * 100 : 0;
+interface Presence {
+  id: string;
+  fields: {
+    Session?: string[];
+    Étudiant?: string[];
+    'Présent ?'?: boolean;
+    Horodatage?: string;
+  };
+}
 
-  // Données pour le graphique de présence par cours
-  const attendanceData = cours.map(c => {
-    const coursId = c.id;
-    
-    // Trouver les sessions de ce cours
-    const coursSessionIds = c.fields.Sessions || [];
-    
-    // Compter les présences pour ces sessions
-    const sessionPresences = presences.filter(p => {
-      const sessionId = p.fields.Session?.[0];
-      return sessionId && coursSessionIds.includes(sessionId);
-    });
-    
-    const total = sessionPresences.length;
-    const presents = sessionPresences.filter(p => p.fields['Présent ?']).length;
-    const taux = total > 0 ? (presents / total) * 100 : 0;
+interface Inscription {
+  id: string;
+  fields: {
+    Étudiant?: string[];
+    Cours?: string[];
+    "Date d'inscription"?: string;
+    Statut?: string;
+  };
+}
 
-    return {
-      cours: c.fields['Nom du cours'].substring(0, 20) + (c.fields['Nom du cours'].length > 20 ? '...' : ''),
-      taux,
-      presents,
-      total,
-    };
-  }).filter(d => d.total > 0); // Ne garder que les cours avec des présences
+export default function DashboardPage() {
+  // Récupérer toutes les données
+  const { data: etudiants, isLoading: etudiantsLoading } = useQuery<Etudiant[]>({
+    queryKey: ['etudiants'],
+    queryFn: async () => {
+      const res = await fetch('/api/airtable?tableName=Étudiants');
+      if (!res.ok) throw new Error('Erreur');
+      const data = await res.json();
+      return data.records || [];
+    },
+  });
 
-  // Les 5 prochaines sessions
-  const prochainesSessions = sessions
-    .filter(s => {
+  const { data: cours } = useQuery<Cours[]>({
+    queryKey: ['cours'],
+    queryFn: async () => {
+      const res = await fetch('/api/airtable?tableName=Cours');
+      if (!res.ok) throw new Error('Erreur');
+      const data = await res.json();
+      return data.records || [];
+    },
+  });
+
+  const { data: sessions } = useQuery<Session[]>({
+    queryKey: ['sessions'],
+    queryFn: async () => {
+      const res = await fetch('/api/airtable?tableName=Sessions');
+      if (!res.ok) throw new Error('Erreur');
+      const data = await res.json();
+      return data.records || [];
+    },
+  });
+
+  const { data: presences } = useQuery<Presence[]>({
+    queryKey: ['presences'],
+    queryFn: async () => {
+      const res = await fetch('/api/airtable?tableName=Présences');
+      if (!res.ok) throw new Error('Erreur');
+      const data = await res.json();
+      return data.records || [];
+    },
+  });
+
+  const { data: inscriptions } = useQuery<Inscription[]>({
+    queryKey: ['inscriptions'],
+    queryFn: async () => {
+      const res = await fetch('/api/airtable?tableName=Inscriptions');
+      if (!res.ok) throw new Error('Erreur');
+      const data = await res.json();
+      return data.records || [];
+    },
+  });
+
+  // Calculs des statistiques
+  const stats = useMemo(() => {
+    const totalEtudiants = etudiants?.length || 0;
+    const totalCours = cours?.length || 0;
+    const sessionsAVenir = sessions?.filter(s => {
       const date = s.fields['Date de la session'];
       return date && isFuture(parseISO(date));
-    })
-    .slice(0, 5);
+    }).length || 0;
+    
+    const totalPresences = presences?.length || 0;
+    const presentsCount = presences?.filter(p => p.fields['Présent ?']).length || 0;
+    const tauxPresence = totalPresences > 0 ? (presentsCount / totalPresences) * 100 : 0;
+
+    // Inscriptions ce mois
+    const startMonth = startOfMonth(new Date());
+    const inscriptionsCeMois = inscriptions?.filter(i => {
+      const date = i.fields["Date d'inscription"];
+      return date && parseISO(date) >= startMonth;
+    }).length || 0;
+
+    // Sessions sans émargement
+    const sessionsSansEmargement = sessions?.filter(s => {
+      const date = s.fields['Date de la session'];
+      const isPast = date && !isFuture(parseISO(date));
+      const hasPresences = (s.fields.Présences?.length || 0) > 0;
+      return isPast && !hasPresences;
+    }).length || 0;
+
+    // Étudiants actifs (avec au moins une présence dans les 30 derniers jours)
+    const date30DaysAgo = subDays(new Date(), 30);
+    const etudiantsActifsIds = new Set(
+      presences
+        ?.filter(p => {
+          const horodatage = p.fields.Horodatage;
+          return horodatage && parseISO(horodatage) >= date30DaysAgo;
+        })
+        .map(p => p.fields.Étudiant?.[0])
+        .filter(Boolean) || []
+    );
+    const etudiantsActifs = etudiantsActifsIds.size;
+
+    return {
+      totalEtudiants,
+      totalCours,
+      sessionsAVenir,
+      tauxPresence,
+      inscriptionsCeMois,
+      sessionsSansEmargement,
+      etudiantsActifs,
+    };
+  }, [etudiants, cours, sessions, presences, inscriptions]);
+
+  // Données graphique de présence par cours
+  const attendanceData = useMemo(() => {
+    if (!cours || !presences) return [];
+    
+    return cours.map(c => {
+      const coursId = c.id;
+      const coursSessionIds = c.fields.Sessions || [];
+      
+      const sessionPresences = presences.filter(p => {
+        const sessionId = p.fields.Session?.[0];
+        return sessionId && coursSessionIds.includes(sessionId);
+      });
+      
+      const total = sessionPresences.length;
+      const presents = sessionPresences.filter(p => p.fields['Présent ?']).length;
+      const taux = total > 0 ? (presents / total) * 100 : 0;
+
+      return {
+        cours: c.fields['Nom du cours'].substring(0, 20) + (c.fields['Nom du cours'].length > 20 ? '...' : ''),
+        taux,
+        presents,
+        total,
+      };
+    }).filter(d => d.total > 0);
+  }, [cours, presences]);
+
+  // Prochaines sessions
+  const prochainesSessions = useMemo(() => {
+    if (!sessions) return [];
+    return sessions
+      .filter(s => {
+        const date = s.fields['Date de la session'];
+        return date && isFuture(parseISO(date));
+      })
+      .slice(0, 5);
+  }, [sessions]);
+
+  // Top étudiants (les plus assidus)
+  const topEtudiants = useMemo(() => {
+    if (!etudiants || !presences) return [];
+    
+    const etudiantStats = etudiants.map(etudiant => {
+      const etudiantPresences = presences.filter(p => p.fields.Étudiant?.[0] === etudiant.id);
+      const totalPresences = etudiantPresences.length;
+      const presents = etudiantPresences.filter(p => p.fields['Présent ?']).length;
+      const taux = totalPresences > 0 ? (presents / totalPresences) * 100 : 0;
+      
+      return {
+        id: etudiant.id,
+        nom: `${etudiant.fields.Prénom} ${etudiant.fields.Nom}`,
+        totalPresences,
+        presents,
+        taux,
+      };
+    });
+    
+    return etudiantStats
+      .filter(e => e.totalPresences > 0)
+      .sort((a, b) => b.taux - a.taux)
+      .slice(0, 5);
+  }, [etudiants, presences]);
+
+  // Helper: nom du cours par ID
+  const getCoursName = (coursId?: string) => {
+    if (!coursId || !cours) return '-';
+    const c = cours.find(c => c.id === coursId);
+    return c?.fields['Nom du cours'] || '-';
+  };
+
+  if (etudiantsLoading) {
+    return (
+      <div className="container mx-auto py-10">
+        <p>Chargement du dashboard...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto py-10 space-y-8">
       {/* En-tête */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-4xl font-bold">Dashboard Design.academy</h1>
-          <p className="text-muted-foreground mt-2">
-            Vue d'ensemble de votre centre de formation
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Link href="/cours">
-            <Button variant="outline">
-              <BookOpen className="mr-2 h-4 w-4" />
-              Voir les cours
-            </Button>
-          </Link>
-        </div>
+      <div>
+        <h1 className="text-4xl font-bold">Dashboard Design.academy</h1>
+        <p className="text-muted-foreground mt-2">
+          Vue d'ensemble de votre centre de formation
+        </p>
       </div>
 
-      {/* Cartes statistiques */}
+      {/* Cartes statistiques principales */}
       <DashboardCards
-        totalEtudiants={totalEtudiants}
-        totalCours={totalCours}
-        sessionsAVenir={sessionsAVenir}
-        tauxPresence={tauxPresence}
+        totalEtudiants={stats.totalEtudiants}
+        totalCours={stats.totalCours}
+        sessionsAVenir={stats.sessionsAVenir}
+        tauxPresence={stats.tauxPresence}
       />
+
+      {/* Nouvelles métriques */}
+      <div className="grid gap-4 md:grid-cols-3">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Inscriptions ce mois</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.inscriptionsCeMois}</div>
+            <p className="text-xs text-muted-foreground">
+              Nouvelles inscriptions
+            </p>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Étudiants actifs</CardTitle>
+            <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.etudiantsActifs}</div>
+            <p className="text-xs text-muted-foreground">
+              Présents dans les 30 derniers jours
+            </p>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Sessions sans émargement</CardTitle>
+            <AlertTriangle className="h-4 w-4 text-destructive" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-destructive">{stats.sessionsSansEmargement}</div>
+            <p className="text-xs text-muted-foreground">
+              Sessions passées non émargées
+            </p>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Graphique de présence */}
       <AttendanceChart data={attendanceData} />
 
+      {/* Deux colonnes: Prochaines sessions + Top étudiants */}
+      <div className="grid gap-4 md:grid-cols-2">
+        {/* Prochaines sessions */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Calendar className="h-5 w-5" />
+              Prochaines Sessions
+            </CardTitle>
+            <CardDescription>
+              Les 5 prochaines sessions planifiées
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {prochainesSessions.length === 0 ? (
+              <p className="text-center py-8 text-muted-foreground">
+                Aucune session à venir
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {prochainesSessions.map(session => (
+                  <div key={session.id} className="flex items-start justify-between p-3 border rounded-lg">
+                    <div>
+                      <p className="font-medium">{session.fields['Nom de la session']}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {getCoursName(session.fields.Cours?.[0])}
+                      </p>
+                    </div>
+                    <Badge variant="outline">
+                      {format(parseISO(session.fields['Date de la session']), 'dd MMM', { locale: fr })}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Top étudiants */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Award className="h-5 w-5" />
+              Top Étudiants
+            </CardTitle>
+            <CardDescription>
+              Les 5 étudiants les plus assidus
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {topEtudiants.length === 0 ? (
+              <p className="text-center py-8 text-muted-foreground">
+                Aucune donnée de présence
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {topEtudiants.map((etudiant, index) => (
+                  <div key={etudiant.id} className="flex items-center justify-between p-3 border rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center font-bold">
+                        #{index + 1}
+                      </div>
+                      <div>
+                        <p className="font-medium">{etudiant.nom}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {etudiant.presents}/{etudiant.totalPresences} présences
+                        </p>
+                      </div>
+                    </div>
+                    <Badge className="bg-green-100 text-green-800">
+                      {etudiant.taux.toFixed(0)}%
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
       {/* Accès rapides */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-          <Link href="/cours">
+      <div className="grid gap-4 md:grid-cols-4">
+        <Link href="/cours">
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-lg">Cours</CardTitle>
               <BookOpen className="h-5 w-5 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">
-                Gérer les formations et sessions
+                Gérer les formations
               </p>
             </CardContent>
-          </Link>
-        </Card>
+          </Card>
+        </Link>
 
-        <Card className="hover:shadow-lg transition-shadow">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-lg">Étudiants</CardTitle>
-            <Users className="h-5 w-5 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">
-              {totalEtudiants} étudiants inscrits
-            </p>
-          </CardContent>
-        </Card>
+        <Link href="/sessions">
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-lg">Sessions</CardTitle>
+              <Calendar className="h-5 w-5 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Planifier les sessions
+              </p>
+            </CardContent>
+          </Card>
+        </Link>
 
-        <Card className="hover:shadow-lg transition-shadow">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-lg">Émargement</CardTitle>
-            <FileText className="h-5 w-5 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">
-              Feuilles de présence numériques
-            </p>
-          </CardContent>
-        </Card>
+        <Link href="/etudiants">
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-lg">Étudiants</CardTitle>
+              <Users className="h-5 w-5 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                {stats.totalEtudiants} inscrits
+              </p>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link href="/presences">
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-lg">Présences</CardTitle>
+              <FileText className="h-5 w-5 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Historique complet
+              </p>
+            </CardContent>
+          </Card>
+        </Link>
       </div>
-
-      {/* Prochaines sessions */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Calendar className="h-5 w-5" />
-            Prochaines Sessions
-          </CardTitle>
-          <CardDescription>
-            Les {prochainesSessions.length} prochaines sessions planifiées
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {prochainesSessions.length === 0 ? (
-            <p className="text-center py-8 text-muted-foreground">
-              Aucune session à venir
-            </p>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Session</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Action</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {prochainesSessions.map(session => (
-                  <TableRow key={session.id}>
-                    <TableCell className="font-medium">
-                      {session.fields['Nom de la session']}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">
-                        {session.fields['Date de la session']
-                          ? format(
-                              parseISO(session.fields['Date de la session']),
-                              'dd MMM yyyy',
-                              { locale: fr }
-                            )
-                          : '-'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Link href={`/formulaires/${session.id}`}>
-                        <Button variant="ghost" size="sm">
-                          <FileText className="h-4 w-4 mr-2" />
-                          Feuille d'émargement
-                        </Button>
-                      </Link>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Récapitulatif Cours */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Récapitulatif des Cours</CardTitle>
-          <CardDescription>
-            Aperçu de tous les cours avec nombre de sessions et inscrits
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Cours</TableHead>
-                <TableHead>Niveau</TableHead>
-                <TableHead>Sessions</TableHead>
-                <TableHead>Formateur</TableHead>
-                <TableHead>Action</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {cours.map(c => (
-                <TableRow key={c.id}>
-                  <TableCell className="font-medium">
-                    {c.fields['Nom du cours']}
-                  </TableCell>
-                  <TableCell>
-                    {c.fields.Niveau && (
-                      <Badge variant="outline">{c.fields.Niveau}</Badge>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {c.fields.Sessions?.length || 0} session(s)
-                  </TableCell>
-                  <TableCell>{c.fields.Formateur || '-'}</TableCell>
-                  <TableCell>
-                    <Link href={`/cours/${c.id}`}>
-                      <Button variant="ghost" size="sm">
-                        Détails
-                      </Button>
-                    </Link>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
     </div>
   );
 }

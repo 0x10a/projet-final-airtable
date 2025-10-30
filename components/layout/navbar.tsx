@@ -6,7 +6,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BookOpen, Users, LayoutDashboard, FileText, GraduationCap, Calendar } from 'lucide-react';
+import { GraduationCap, LayoutDashboard, BookOpen, Calendar, FileText, Users, CheckSquare, BarChart3 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
@@ -39,6 +39,16 @@ const navItems = [
     label: 'Étudiants',
     href: '/etudiants',
     icon: Users,
+  },
+  {
+    label: 'Présences',
+    href: '/presences',
+    icon: CheckSquare,
+  },
+  {
+    label: 'Rapports',
+    href: '/rapports',
+    icon: BarChart3,
   },
 ];
 
