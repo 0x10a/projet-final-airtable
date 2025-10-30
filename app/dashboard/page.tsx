@@ -8,7 +8,7 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { DashboardCards } from '@/components/custom/DashboardCards';
-import { AttendanceChart } from '@/components/custom/AttendanceChart';
+import { SessionsCalendar } from '@/components/custom/SessionsCalendar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import Link from 'next/link';
 import { BookOpen, Calendar, Users, FileText, TrendingUp, AlertTriangle, Award, CheckCircle2 } from 'lucide-react';
@@ -304,8 +304,21 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      {/* Graphique de présence */}
-      <AttendanceChart data={attendanceData} />
+      {/* Calendrier des sessions */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Calendar className="h-5 w-5" />
+            Calendrier des Sessions
+          </CardTitle>
+          <CardDescription>
+            Visualisez toutes vos sessions planifiées
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <SessionsCalendar sessions={sessions || []} cours={cours || []} />
+        </CardContent>
+      </Card>
 
       {/* Deux colonnes: Prochaines sessions + Top étudiants */}
       <div className="grid gap-4 md:grid-cols-2">

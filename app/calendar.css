@@ -1,0 +1,151 @@
+/* Personnalisation du calendrier react-big-calendar */
+
+/* En-tête du calendrier */
+.rbc-header {
+  padding: 10px 5px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  background-color: hsl(var(--muted));
+  border-bottom: 1px solid hsl(var(--border));
+}
+
+/* Cellules du calendrier */
+.rbc-day-bg {
+  background-color: white;
+}
+
+.rbc-off-range-bg {
+  background-color: hsl(var(--muted) / 0.3);
+}
+
+.rbc-today {
+  background-color: hsl(var(--primary) / 0.1);
+}
+
+/* Événements */
+.rbc-event {
+  background-color: hsl(var(--primary));
+  border-radius: 4px;
+  padding: 2px 5px;
+  font-size: 0.875rem;
+  border: none;
+}
+
+.rbc-event:hover {
+  opacity: 0.9;
+}
+
+.rbc-event-label {
+  font-size: 0.75rem;
+}
+
+.rbc-event-content {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Date de la cellule */
+.rbc-date-cell {
+  padding: 4px;
+  text-align: right;
+  font-size: 0.875rem;
+}
+
+/* Boutons de navigation (si affichés) */
+.rbc-toolbar button {
+  color: hsl(var(--foreground));
+  border: 1px solid hsl(var(--border));
+  background-color: white;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  transition: all 0.2s;
+}
+
+.rbc-toolbar button:hover {
+  background-color: hsl(var(--muted));
+}
+
+.rbc-toolbar button.rbc-active {
+  background-color: hsl(var(--primary));
+  color: white;
+}
+
+/* Vue semaine/jour */
+.rbc-time-slot {
+  border-top: 1px solid hsl(var(--border));
+}
+
+.rbc-time-header-content {
+  border-left: 1px solid hsl(var(--border));
+}
+
+.rbc-time-content {
+  border-top: 1px solid hsl(var(--border));
+}
+
+.rbc-timeslot-group {
+  border-left: 1px solid hsl(var(--border));
+}
+
+.rbc-current-time-indicator {
+  background-color: hsl(var(--destructive));
+  height: 2px;
+}
+
+/* Popup "show more" */
+.rbc-overlay {
+  background-color: white;
+  border: 1px solid hsl(var(--border));
+  border-radius: 8px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  padding: 10px;
+}
+
+.rbc-overlay-header {
+  font-weight: 600;
+  margin-bottom: 8px;
+  font-size: 0.875rem;
+}
+
+/* Sélection */
+.rbc-addons-dnd-drag-preview {
+  background-color: hsl(var(--primary) / 0.5);
+}
+
+/* Scrollbar pour vue semaine/jour */
+.rbc-time-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.rbc-time-content::-webkit-scrollbar-track {
+  background: hsl(var(--muted));
+}
+
+.rbc-time-content::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: 4px;
+}
+
+.rbc-time-content::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--foreground) / 0.3);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .rbc-header {
+    font-size: 0.75rem;
+    padding: 8px 3px;
+  }
+
+  .rbc-event {
+    font-size: 0.75rem;
+    padding: 1px 3px;
+  }
+
+  .rbc-toolbar button {
+    padding: 4px 8px;
+    font-size: 0.75rem;
+  }
+}
