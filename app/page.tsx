@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Database, FileText, BarChart3, CheckCircle } from "lucide-react";
+import { BookOpen, FileText, BarChart3, CheckCircle, Users, Calendar, Target } from "lucide-react";
 
 export default function Home() {
   return (
@@ -10,22 +10,25 @@ export default function Home() {
         {/* Hero Section */}
         <div className="text-center mb-16">
           <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            Projet Final Airtable
+            Design.academy
           </h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Application Next.js 15 avec intégration complète d'Airtable, TypeScript, et shadcn/ui
+            Plateforme de gestion de formation connectée à Airtable
           </p>
-          <div className="mt-8 flex gap-4 justify-center">
+          <p className="text-muted-foreground mt-2">
+            Gérez vos cours, sessions, inscriptions et émargements en toute simplicité
+          </p>
+          <div className="mt-8 flex gap-4 justify-center flex-wrap">
             <Link href="/dashboard">
               <Button size="lg">
                 <BarChart3 className="mr-2 h-5 w-5" />
-                Voir le Dashboard
+                Dashboard Admin
               </Button>
             </Link>
-            <Link href="/formulaires">
+            <Link href="/cours">
               <Button size="lg" variant="outline">
-                <FileText className="mr-2 h-5 w-5" />
-                Formulaires
+                <BookOpen className="mr-2 h-5 w-5" />
+                Catalogue de Cours
               </Button>
             </Link>
           </div>
@@ -35,25 +38,25 @@ export default function Home() {
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
           <Card>
             <CardHeader>
-              <Database className="h-10 w-10 mb-2 text-blue-600" />
-              <CardTitle>Intégration Airtable</CardTitle>
+              <BookOpen className="h-10 w-10 mb-2 text-blue-600" />
+              <CardTitle>Gestion des Cours</CardTitle>
               <CardDescription>
-                SDK officiel avec helpers CRUD complets et types TypeScript
+                Catalogue complet avec détails, sessions et inscriptions
               </CardDescription>
             </CardHeader>
             <CardContent>
               <ul className="text-sm space-y-2 text-muted-foreground">
                 <li className="flex items-start">
                   <CheckCircle className="h-4 w-4 mr-2 mt-0.5 text-green-500 flex-shrink-0" />
-                  API sécurisée côté serveur
+                  Filtres par niveau et sujet
                 </li>
                 <li className="flex items-start">
                   <CheckCircle className="h-4 w-4 mr-2 mt-0.5 text-green-500 flex-shrink-0" />
-                  Opérations GET, POST, PUT, DELETE
+                  Programme et objectifs détaillés
                 </li>
                 <li className="flex items-start">
                   <CheckCircle className="h-4 w-4 mr-2 mt-0.5 text-green-500 flex-shrink-0" />
-                  Filtrage et tri avancés
+                  Suivi des sessions planifiées
                 </li>
               </ul>
             </CardContent>
@@ -62,24 +65,24 @@ export default function Home() {
           <Card>
             <CardHeader>
               <FileText className="h-10 w-10 mb-2 text-purple-600" />
-              <CardTitle>React Query</CardTitle>
+              <CardTitle>Émargement Numérique</CardTitle>
               <CardDescription>
-                Gestion d'état avec cache automatique et synchronisation
+                Feuilles de présence conformes Qualiopi
               </CardDescription>
             </CardHeader>
             <CardContent>
               <ul className="text-sm space-y-2 text-muted-foreground">
                 <li className="flex items-start">
                   <CheckCircle className="h-4 w-4 mr-2 mt-0.5 text-green-500 flex-shrink-0" />
-                  Hooks personnalisés useAirtable
+                  Signature électronique
                 </li>
                 <li className="flex items-start">
                   <CheckCircle className="h-4 w-4 mr-2 mt-0.5 text-green-500 flex-shrink-0" />
-                  Invalidation automatique du cache
+                  Horodatage automatique
                 </li>
                 <li className="flex items-start">
                   <CheckCircle className="h-4 w-4 mr-2 mt-0.5 text-green-500 flex-shrink-0" />
-                  États de chargement et erreurs
+                  Traçabilité complète
                 </li>
               </ul>
             </CardContent>
@@ -88,57 +91,86 @@ export default function Home() {
           <Card>
             <CardHeader>
               <BarChart3 className="h-10 w-10 mb-2 text-green-600" />
-              <CardTitle>Dashboard Complet</CardTitle>
+              <CardTitle>Dashboard & Statistiques</CardTitle>
               <CardDescription>
-                Interface riche avec graphiques et tableaux interactifs
+                Suivi en temps réel des formations
               </CardDescription>
             </CardHeader>
             <CardContent>
               <ul className="text-sm space-y-2 text-muted-foreground">
                 <li className="flex items-start">
                   <CheckCircle className="h-4 w-4 mr-2 mt-0.5 text-green-500 flex-shrink-0" />
-                  Visualisation avec Recharts
+                  Taux de présence par cours
                 </li>
                 <li className="flex items-start">
                   <CheckCircle className="h-4 w-4 mr-2 mt-0.5 text-green-500 flex-shrink-0" />
-                  Tableaux TanStack avec tri
+                  Graphiques interactifs
                 </li>
                 <li className="flex items-start">
                   <CheckCircle className="h-4 w-4 mr-2 mt-0.5 text-green-500 flex-shrink-0" />
-                  CRUD inline avec dialogs
+                  Vue d'ensemble en un coup d'œil
                 </li>
               </ul>
             </CardContent>
           </Card>
         </div>
 
-        {/* Tech Stack */}
+        {/* Pages Disponibles */}
         <Card className="max-w-4xl mx-auto">
           <CardHeader>
-            <CardTitle>Stack Technique</CardTitle>
-            <CardDescription>Technologies et bibliothèques utilisées</CardDescription>
+            <CardTitle>Pages & Fonctionnalités</CardTitle>
+            <CardDescription>Découvrez toutes les fonctionnalités de la plateforme</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid md:grid-cols-2 gap-4">
+            <div className="grid md:grid-cols-2 gap-6">
               <div>
-                <h3 className="font-semibold mb-2">Frontend</h3>
-                <ul className="text-sm space-y-1 text-muted-foreground">
-                  <li>• Next.js 15 (App Router)</li>
-                  <li>• TypeScript</li>
-                  <li>• Tailwind CSS</li>
-                  <li>• shadcn/ui</li>
-                  <li>• Lucide React (icônes)</li>
+                <h3 className="font-semibold mb-3 flex items-center gap-2">
+                  <Users className="h-5 w-5 text-blue-600" />
+                  Pour les Administrateurs
+                </h3>
+                <ul className="space-y-2 text-sm text-muted-foreground">
+                  <li className="flex items-start">
+                    <Target className="h-4 w-4 mr-2 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <Link href="/dashboard" className="font-medium text-foreground hover:underline">
+                        Dashboard
+                      </Link>
+                      <p className="text-xs">Statistiques et vue d'ensemble</p>
+                    </div>
+                  </li>
+                  <li className="flex items-start">
+                    <Target className="h-4 w-4 mr-2 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <Link href="/cours" className="font-medium text-foreground hover:underline">
+                        Gestion des Cours
+                      </Link>
+                      <p className="text-xs">Catalogue complet et détails</p>
+                    </div>
+                  </li>
                 </ul>
               </div>
               <div>
-                <h3 className="font-semibold mb-2">Bibliothèques</h3>
-                <ul className="text-sm space-y-1 text-muted-foreground">
-                  <li>• Airtable SDK</li>
-                  <li>• React Query</li>
-                  <li>• React Hook Form</li>
-                  <li>• Zod (validation)</li>
-                  <li>• Recharts (graphiques)</li>
-                  <li>• TanStack Table</li>
+                <h3 className="font-semibold mb-3 flex items-center gap-2">
+                  <Users className="h-5 w-5 text-purple-600" />
+                  Pour les Étudiants
+                </h3>
+                <ul className="space-y-2 text-sm text-muted-foreground">
+                  <li className="flex items-start">
+                    <Target className="h-4 w-4 mr-2 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <span className="font-medium text-foreground">Émargement</span>
+                      <p className="text-xs">Confirmation de présence par session</p>
+                    </div>
+                  </li>
+                  <li className="flex items-start">
+                    <Target className="h-4 w-4 mr-2 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <Link href="/cours" className="font-medium text-foreground hover:underline">
+                        Consulter les Cours
+                      </Link>
+                      <p className="text-xs">Voir le programme et les sessions</p>
+                    </div>
+                  </li>
                 </ul>
               </div>
             </div>
@@ -147,7 +179,10 @@ export default function Home() {
 
         {/* Footer */}
         <div className="text-center mt-16 text-muted-foreground">
-          <p className="text-sm">
+          <p className="text-sm mb-2">
+            Plateforme de gestion de formation • Next.js 15 + Airtable
+          </p>
+          <p className="text-xs">
             Consultez le README.md pour les instructions de configuration
           </p>
         </div>

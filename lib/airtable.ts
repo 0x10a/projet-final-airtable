@@ -35,6 +35,62 @@ export interface BaseFields extends FieldSet {
   [key: string]: any;
 }
 
+// ========================================
+// TYPES SPÉCIFIQUES DESIGN.ACADEMY
+// ========================================
+
+// Table Étudiants
+export interface EtudiantFields extends BaseFields {
+  Prénom: string;
+  Nom: string;
+  Email: string;
+  Téléphone?: string;
+  Adresse?: string;
+  Notes?: string;
+}
+
+// Table Cours
+export interface CoursFields extends BaseFields {
+  'Nom du cours': string;
+  Sujet?: string;
+  Niveau?: string;
+  'Date de début'?: string;
+  'Durée (jours)'?: number;
+  Formateur?: string;
+  'Objectifs pédagogiques'?: string;
+  Prérequis?: string;
+  Programme?: string;
+  Modalité?: string;
+  Sessions?: string[]; // Linked records IDs
+  Inscriptions?: string[]; // Linked records IDs
+}
+
+// Table Sessions
+export interface SessionFields extends BaseFields {
+  'Nom de la session': string;
+  'Date de la session': string;
+  Cours?: string[]; // Linked record ID
+  Présences?: string[]; // Linked records IDs
+}
+
+// Table Inscriptions
+export interface InscriptionFields extends BaseFields {
+  Étudiant?: string[]; // Linked record ID
+  Cours?: string[]; // Linked record ID
+  "Date d'inscription"?: string;
+  Statut?: 'Inscrit' | 'Terminé' | 'Annulé';
+}
+
+// Table Présences
+export interface PresenceFields extends BaseFields {
+  Session?: string[]; // Linked record ID
+  Étudiant?: string[]; // Linked record ID
+  'Présent ?'?: boolean;
+  Signature?: string;
+  Horodatage?: string;
+  'Date de la session (from Sessions)'?: string; // Lookup field
+}
+
 /**
  * Récupère tous les records d'une table Airtable
  * @param tableName - Nom de la table Airtable
@@ -52,13 +108,16 @@ export async function getRecords<T extends FieldSet = BaseFields>(
   }
 ): Promise<AirtableRecord<T>[]> {
   try {
-    const query = base(tableName).select({
-      view: options?.view,
-      filterByFormula: options?.filterByFormula,
-      sort: options?.sort,
-      maxRecords: options?.maxRecords,
-      fields: options?.fields,
-    });
+    // Build select options object, only including defined values
+    const selectOptions: any = {};
+    
+    if (options?.view) selectOptions.view = options.view;
+    if (options?.filterByFormula) selectOptions.filterByFormula = options.filterByFormula;
+    if (options?.sort) selectOptions.sort = options.sort;
+    if (options?.maxRecords) selectOptions.maxRecords = options.maxRecords;
+    if (options?.fields) selectOptions.fields = options.fields;
+
+    const query = base(tableName).select(selectOptions);
 
     const records: AirtableRecord<T>[] = [];
     
@@ -92,6 +151,12 @@ export async function getRecord<T extends FieldSet = BaseFields>(
 ): Promise<AirtableRecord<T>> {
   try {
     const record = await base(tableName).find(recordId);
+    
+    // Vérifier que le record existe
+    if (!record || !record.id) {
+      throw new Error(`Record ${recordId} introuvable dans ${tableName}`);
+    }
+    
     return {
       id: record.id,
       fields: record.fields as T,
