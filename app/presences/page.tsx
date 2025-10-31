@@ -160,9 +160,19 @@ export default function PresencesPage() {
 
       // Filtre par statut
       if (filterStatut !== 'all') {
-        const isPresent = presence.fields['Présent ?'];
+        const presentValue: any = presence.fields['Présent ?'];
+        let isPresent = false;
+        
+        if (typeof presentValue === 'boolean') {
+          isPresent = presentValue;
+        } else if (typeof presentValue === 'string') {
+          isPresent = presentValue.toLowerCase() === 'oui' || 
+                     presentValue.toLowerCase() === 'présent' ||
+                     presentValue.toLowerCase() === 'present';
+        }
+        
         if (filterStatut === 'present' && !isPresent) return false;
-        if (filterStatut === 'absent' && isPresent) return false;
+        if (filterStatut === 'absent' && (isPresent || presentValue === 'À saisir')) return false;
       }
 
       // Recherche textuelle
@@ -189,7 +199,16 @@ export default function PresencesPage() {
     if (!presences) return { total: 0, presents: 0, absents: 0, tauxPresence: 0 };
     
     const total = presences.length;
-    const presents = presences.filter(p => p.fields['Présent ?']).length;
+    const presents = presences.filter(p => {
+      const val: any = p.fields['Présent ?'];
+      if (typeof val === 'boolean') return val;
+      if (typeof val === 'string') {
+        return val.toLowerCase() === 'oui' || 
+               val.toLowerCase() === 'présent' ||
+               val.toLowerCase() === 'present';
+      }
+      return false;
+    }).length;
     const absents = total - presents;
     const tauxPresence = total > 0 ? (presents / total) * 100 : 0;
 
@@ -210,12 +229,26 @@ export default function PresencesPage() {
       const coursId = getSessionCoursId(sessionId);
       const date = getSessionDate(sessionId);
       
+      const presentValue: any = presence.fields['Présent ?'];
+      let statut = 'Absent';
+      if (typeof presentValue === 'boolean' && presentValue) {
+        statut = 'Présent';
+      } else if (typeof presentValue === 'string') {
+        if (presentValue.toLowerCase() === 'oui' || 
+            presentValue.toLowerCase() === 'présent' ||
+            presentValue.toLowerCase() === 'present') {
+          statut = 'Présent';
+        } else {
+          statut = presentValue; // "À saisir" ou autre
+        }
+      }
+      
       return [
         formatDateNumeric(date),
         getSessionName(sessionId),
         coursId ? getCoursName(coursId) : '',
         getEtudiantName(etudiantId),
-        presence.fields['Présent ?'] ? 'Présent' : 'Absent',
+        statut,
         presence.fields.Signature || '',
         formatDateTime(presence.fields.Horodatage),
       ];
@@ -409,17 +442,41 @@ export default function PresencesPage() {
                           {etudiantId ? getEtudiantName(etudiantId) : '-'}
                         </TableCell>
                         <TableCell>
-                          {presence.fields['Présent ?'] ? (
-                            <Badge className="bg-green-100 text-green-800">
-                              <CheckCircle2 className="h-3 w-3 mr-1" />
-                              Présent
-                            </Badge>
-                          ) : (
-                            <Badge variant="destructive">
-                              <XCircle className="h-3 w-3 mr-1" />
-                              Absent
-                            </Badge>
-                          )}
+                          {(() => {
+                            const presentValue: any = presence.fields['Présent ?'];
+                            
+                            // Gérer les différents types de valeurs possibles
+                            let isPresent = false;
+                            if (typeof presentValue === 'boolean') {
+                              isPresent = presentValue;
+                            } else if (typeof presentValue === 'string') {
+                              isPresent = presentValue.toLowerCase() === 'oui' || 
+                                         presentValue.toLowerCase() === 'présent' ||
+                                         presentValue.toLowerCase() === 'present';
+                            }
+                            
+                            // Si "À saisir" ou vide, considérer comme non renseigné
+                            if (presentValue === 'À saisir' || !presentValue) {
+                              return (
+                                <Badge variant="secondary">
+                                  <XCircle className="h-3 w-3 mr-1" />
+                                  {presentValue || 'Non renseigné'}
+                                </Badge>
+                              );
+                            }
+                            
+                            return isPresent ? (
+                              <Badge className="bg-green-100 text-green-800">
+                                <CheckCircle2 className="h-3 w-3 mr-1" />
+                                Présent
+                              </Badge>
+                            ) : (
+                              <Badge variant="destructive">
+                                <XCircle className="h-3 w-3 mr-1" />
+                                Absent
+                              </Badge>
+                            );
+                          })()}
                         </TableCell>
                         <TableCell className="max-w-[200px] truncate">
                           {presence.fields.Signature || '-'}
