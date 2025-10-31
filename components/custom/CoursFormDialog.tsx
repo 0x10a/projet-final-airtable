@@ -4,7 +4,7 @@
 
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { coursSchema, type CoursFormData } from '@/lib/schemas';
@@ -63,6 +63,8 @@ export function CoursFormDialog({
   onSuccess,
 }: CoursFormDialogProps) {
   const isEditing = !!cours;
+  const [sujets, setSujets] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const form = useForm<CoursFormData>({
     resolver: zodResolver(coursSchema),
@@ -77,6 +79,35 @@ export function CoursFormDialog({
       Modalité: undefined,
     },
   });
+
+  // Charger les sujets existants depuis Airtable
+  useEffect(() => {
+    const fetchSujets = async () => {
+      try {
+        const res = await fetch('/api/airtable?tableName=Cours');
+        if (res.ok) {
+          const data = await res.json();
+          // Extraire les sujets uniques
+          const uniqueSujets = Array.from(
+            new Set(
+              data.records
+                .map((r: any) => r.fields.Sujet)
+                .filter((s: any) => s)
+            )
+          ) as string[];
+          setSujets(uniqueSujets.sort());
+        }
+      } catch (error) {
+        console.error('Erreur lors du chargement des sujets:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (open) {
+      fetchSujets();
+    }
+  }, [open]);
 
   // Charger les données en mode édition
   useEffect(() => {
@@ -110,15 +141,30 @@ export function CoursFormDialog({
       const url = '/api/airtable';
       const method = isEditing ? 'PUT' : 'POST';
 
+      // Préparer les champs en nettoyant les valeurs undefined
+      // Note: "Nom du cours" est un champ calculé dans Airtable, on ne l'envoie pas
+      const cleanedData: any = {
+        Sujet: data.Sujet,
+        Modalité: data.Modalité,
+        'Date de début': data['Date de début'],
+        'Durée (jours)': data['Durée (jours)'],
+      };
+
+      // Ajouter les champs optionnels seulement s'ils sont définis
+      if (data.Niveau) cleanedData.Niveau = data.Niveau;
+      if (data.Formateur) cleanedData.Formateur = data.Formateur;
+      if (data['Objectifs pédagogiques']) cleanedData['Objectifs pédagogiques'] = data['Objectifs pédagogiques'];
+      if (data.Prérequis) cleanedData.Prérequis = data.Prérequis;
+
       const body = isEditing
         ? {
             tableName: 'Cours',
             recordId: cours.id,
-            fields: data,
+            fields: cleanedData,
           }
         : {
             tableName: 'Cours',
-            fields: data,
+            fields: cleanedData,
           };
 
       const res = await fetch(url, {
@@ -171,9 +217,24 @@ export function CoursFormDialog({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Sujet *</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Ex: Design graphique" {...field} />
-                  </FormControl>
+                  <Select
+                    onValueChange={field.onChange}
+                    value={field.value}
+                    disabled={loading}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder={loading ? "Chargement..." : "Sélectionner un sujet"} />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {sujets.map((sujet) => (
+                        <SelectItem key={sujet} value={sujet}>
+                          {sujet}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}

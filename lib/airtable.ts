@@ -184,15 +184,18 @@ export async function createRecord<T extends FieldSet = BaseFields>(
   fields: Partial<T>
 ): Promise<AirtableRecord<T>> {
   try {
+    console.log('Tentative de création dans', tableName, 'avec les champs:', fields);
     const record = await base(tableName).create(fields as FieldSet);
     return {
       id: record.id,
       fields: record.fields as T,
       createdTime: record.get('Created') as string | undefined,
     };
-  } catch (error) {
-    console.error('Erreur lors de la création du record:', error);
-    throw new Error(`Impossible de créer le record dans ${tableName}`);
+  } catch (error: any) {
+    console.error('Erreur détaillée lors de la création du record:', error);
+    console.error('Message d\'erreur:', error.message);
+    console.error('Détails:', error.error);
+    throw error;
   }
 }
 

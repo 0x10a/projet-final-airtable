@@ -5,6 +5,7 @@ import "react-big-calendar/lib/css/react-big-calendar.css";
 import "./calendar.css";
 import { Providers } from "@/components/providers";
 import { Navbar } from "@/components/layout/navbar";
+import { RealtimeNotifications } from "@/components/realtime-notifications";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -32,6 +33,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <Providers>
+          <RealtimeNotifications />
           <Navbar />
           <main className="min-h-screen">
             {children}

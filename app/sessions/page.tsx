@@ -9,8 +9,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plus, Calendar, BookOpen, Edit, Trash2 } from 'lucide-react';
-import { SessionFormDialog } from '@/components/custom/SessionFormDialog';
+import { Calendar, BookOpen, Trash2 } from 'lucide-react';
 import { parseAirtableDate, formatDateShort } from '@/lib/date-utils';
 import {
   Table,
@@ -41,9 +40,6 @@ interface Cours {
 }
 
 export default function SessionsPage() {
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingSession, setEditingSession] = useState<Session | null>(null);
-
   // Récupérer toutes les sessions
   const { data: sessions, isLoading, refetch } = useQuery<Session[]>({
     queryKey: ['sessions'],
@@ -90,25 +86,6 @@ export default function SessionsPage() {
     }
   };
 
-  // Ouvrir le dialog pour créer une nouvelle session
-  const handleCreate = () => {
-    setEditingSession(null);
-    setIsDialogOpen(true);
-  };
-
-  // Ouvrir le dialog pour modifier une session
-  const handleEdit = (session: Session) => {
-    setEditingSession(session);
-    setIsDialogOpen(true);
-  };
-
-  // Callback après succès du formulaire
-  const handleSuccess = () => {
-    setIsDialogOpen(false);
-    setEditingSession(null);
-    refetch();
-  };
-
   // Trouver le nom d'un cours par son ID
   const getCoursName = (coursId: string) => {
     const c = cours?.find(c => c.id === coursId);
@@ -132,17 +109,11 @@ export default function SessionsPage() {
   return (
     <div className="container mx-auto py-10 space-y-8">
       {/* En-tête */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-4xl font-bold">Gestion des Sessions</h1>
-          <p className="text-muted-foreground mt-2">
-            Créer, modifier et supprimer des sessions de formation
-          </p>
-        </div>
-        <Button onClick={handleCreate}>
-          <Plus className="mr-2 h-4 w-4" />
-          Nouvelle Session
-        </Button>
+      <div>
+        <h1 className="text-4xl font-bold">Gestion des Sessions</h1>
+        <p className="text-muted-foreground mt-2">
+          Les sessions sont créées automatiquement depuis Airtable
+        </p>
       </div>
 
       {/* Statistiques */}
@@ -246,22 +217,13 @@ export default function SessionsPage() {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleEdit(session)}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDelete(session.id)}
-                          >
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDelete(session.id)}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
                       </TableCell>
                     </TableRow>
                   );
@@ -271,14 +233,6 @@ export default function SessionsPage() {
           )}
         </CardContent>
       </Card>
-
-      {/* Dialog de formulaire */}
-      <SessionFormDialog
-        open={isDialogOpen}
-        onOpenChange={setIsDialogOpen}
-        session={editingSession}
-        onSuccess={handleSuccess}
-      />
     </div>
   );
 }

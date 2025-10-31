@@ -240,6 +240,12 @@ export default function PresencesPage() {
     toast.success('Export CSV réussi !');
   };
 
+  // Liste unique des cours pour le filtre
+  const coursList = useMemo(() => {
+    if (!cours) return [];
+    return cours;
+  }, [cours]);
+
   if (presencesLoading) {
     return (
       <div className="container mx-auto py-10">
@@ -247,12 +253,6 @@ export default function PresencesPage() {
       </div>
     );
   }
-
-  // Liste unique des cours pour le filtre
-  const coursList = useMemo(() => {
-    if (!cours) return [];
-    return cours;
-  }, [cours]);
 
   return (
     <div className="container mx-auto py-10 space-y-8">
