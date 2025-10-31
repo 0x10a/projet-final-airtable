@@ -479,8 +479,40 @@ export default function PresencesPage() {
                             );
                           })()}
                         </TableCell>
-                        <TableCell className="max-w-[200px] truncate">
-                          {presence.fields.Signature || '-'}
+                        <TableCell>
+                          {(() => {
+                            const sig = presence.fields.Signature;
+                            if (!sig) return '-';
+                            
+                            // Si c'est un array (Attachment), prendre la première URL
+                            if (Array.isArray(sig) && sig.length > 0) {
+                              return (
+                                <img 
+                                  src={sig[0].url} 
+                                  alt="Signature" 
+                                  className="h-12 w-auto border rounded"
+                                />
+                              );
+                            }
+                            
+                            // Si c'est une string base64
+                            if (typeof sig === 'string' && sig.startsWith('data:image')) {
+                              return (
+                                <img 
+                                  src={sig} 
+                                  alt="Signature" 
+                                  className="h-12 w-auto border rounded"
+                                />
+                              );
+                            }
+                            
+                            // Sinon afficher le texte
+                            return (
+                              <span className="text-sm truncate max-w-[100px] block">
+                                {typeof sig === 'string' ? sig : '-'}
+                              </span>
+                            );
+                          })()}
                         </TableCell>
                         <TableCell className="text-sm text-muted-foreground">
                           {formatDateTime(presence.fields.Horodatage)}

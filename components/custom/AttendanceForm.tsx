@@ -3,7 +3,7 @@
  * Utilisé dans /app/emargement/[presenceId]/page.tsx
  * 
  * Les présences sont déjà créées par l'automate Airtable.
- * Ce formulaire permet uniquement de METTRE À JOUR la présence avec la signature.
+ * Ce formulaire permet uniquement de METTRE À JOUR la présence avec la signature manuscrite.
  */
 
 'use client';
@@ -20,15 +20,14 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { toast } from 'sonner';
-import { Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Loader2, CheckCircle2, Eraser } from 'lucide-react';
 import { AirtableRecord, EtudiantFields } from '@/lib/airtable';
 import { z } from 'zod';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
+import SignatureCanvas from 'react-signature-canvas';
 
-// Schéma simplifié pour émargement individuel
+// Schéma simplifié pour émargement individuel (signature base64)
 const signatureSchema = z.object({
   signature: z.string().min(1, 'La signature est requise'),
 });
@@ -44,6 +43,7 @@ interface AttendanceFormProps {
 export function AttendanceForm({ presenceId, etudiant, isAlreadySigned }: AttendanceFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const sigCanvas = useRef<SignatureCanvas>(null);
 
   const form = useForm<SignatureFormData>({
     resolver: zodResolver(signatureSchema),
@@ -55,7 +55,8 @@ export function AttendanceForm({ presenceId, etudiant, isAlreadySigned }: Attend
   async function onSubmit(values: SignatureFormData) {
     setIsSubmitting(true);
     try {
-      // Mettre à jour l'enregistrement de présence existant via l'API
+      // Mettre à jour uniquement le statut et l'horodatage
+      // (pas de stockage de la signature pour l'instant)
       const response = await fetch('/api/airtable', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -64,20 +65,22 @@ export function AttendanceForm({ presenceId, etudiant, isAlreadySigned }: Attend
           recordId: presenceId,
           fields: {
             'Présent ?': 'Oui', // Mettre à jour le statut
-            Signature: values.signature,
             Horodatage: new Date().toISOString(),
           },
         }),
       });
 
       if (!response.ok) {
-        throw new Error('Erreur lors de l\'enregistrement');
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Erreur API:', errorData);
+        throw new Error(errorData.error || 'Erreur lors de l\'enregistrement');
       }
 
       setIsSuccess(true);
       toast.success('Votre présence a été confirmée avec succès !');
       form.reset();
     } catch (error: any) {
+      console.error('Erreur émargement:', error);
       toast.error(error.message || 'Erreur lors de l\'émargement');
     } finally {
       setIsSubmitting(false);
@@ -112,22 +115,70 @@ export function AttendanceForm({ presenceId, etudiant, isAlreadySigned }: Attend
     );
   }
 
+  const handleClear = () => {
+    sigCanvas.current?.clear();
+    form.setValue('signature', '');
+  };
+
+  const handleSubmitWithSignature = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Vérifier si le canvas contient une signature
+    if (sigCanvas.current?.isEmpty()) {
+      form.setError('signature', {
+        type: 'manual',
+        message: 'Veuillez signer dans le cadre ci-dessus',
+      });
+      return;
+    }
+
+    // Récupérer la signature en base64 PNG
+    const signatureData = sigCanvas.current?.toDataURL('image/png');
+    
+    if (signatureData) {
+      form.setValue('signature', signatureData);
+      await form.handleSubmit(onSubmit)();
+    }
+  };
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={handleSubmitWithSignature} className="space-y-6">
 
-        {/* Signature */}
+        {/* Canvas de Signature */}
         <FormField
           control={form.control}
           name="signature"
-          render={({ field }) => (
+          render={() => (
             <FormItem>
-              <FormLabel>Signature *</FormLabel>
+              <FormLabel>Signature manuscrite *</FormLabel>
               <FormControl>
-                <Input placeholder="Tapez votre nom complet" {...field} />
+                <div className="space-y-2">
+                  <div className="border-2 border-dashed border-primary/20 rounded-lg overflow-hidden bg-white">
+                    <SignatureCanvas
+                      ref={sigCanvas}
+                      canvasProps={{
+                        className: 'w-full h-40 touch-none',
+                        style: { touchAction: 'none' }
+                      }}
+                      backgroundColor="rgb(255, 255, 255)"
+                      penColor="rgb(0, 0, 0)"
+                    />
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleClear}
+                    className="w-full"
+                  >
+                    <Eraser className="h-4 w-4 mr-2" />
+                    Effacer et recommencer
+                  </Button>
+                </div>
               </FormControl>
               <FormDescription>
-                Entrez votre nom complet en guise de signature électronique
+                Signez avec votre doigt (mobile) ou votre souris (ordinateur) dans le cadre ci-dessus
               </FormDescription>
               <FormMessage />
             </FormItem>
@@ -142,7 +193,7 @@ export function AttendanceForm({ presenceId, etudiant, isAlreadySigned }: Attend
 
         <p className="text-xs text-center text-muted-foreground">
           En validant, vous confirmez votre présence à cette session de formation.
-          L'horodatage sera automatiquement enregistré.
+          Votre signature et l'horodatage seront automatiquement enregistrés.
         </p>
       </form>
     </Form>

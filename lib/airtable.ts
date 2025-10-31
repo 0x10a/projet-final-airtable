@@ -85,8 +85,8 @@ export interface InscriptionFields extends BaseFields {
 export interface PresenceFields extends BaseFields {
   Session?: string[]; // Linked record ID
   Étudiant?: string[]; // Linked record ID
-  'Présent ?'?: boolean;
-  Signature?: string;
+  'Présent ?'?: boolean | string; // Peut être boolean ou string ("Oui", "À saisir")
+  Signature?: string | Array<{ url: string; filename?: string }>; // Long Text (base64) ou Attachment field
   Horodatage?: string;
   'Date de la session (from Sessions)'?: string; // Lookup field
 }
@@ -243,15 +243,19 @@ export async function updateRecord<T extends FieldSet = BaseFields>(
   fields: Partial<T>
 ): Promise<AirtableRecord<T>> {
   try {
+    console.log(`Tentative de mise à jour du record ${recordId} dans ${tableName}`);
+    console.log('Champs à mettre à jour:', JSON.stringify(fields, null, 2));
+    
     const record = await base(tableName).update(recordId, fields as FieldSet);
     return {
       id: record.id,
       fields: record.fields as T,
       createdTime: record.get('Created') as string | undefined,
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error(`Erreur lors de la mise à jour du record ${recordId}:`, error);
-    throw new Error(`Impossible de mettre à jour le record ${recordId}`);
+    console.error('Détails erreur:', error.message, error.statusCode);
+    throw error; // Re-throw l'erreur originale pour voir les détails
   }
 }
 
