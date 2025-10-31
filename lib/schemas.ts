@@ -81,8 +81,7 @@ export type PresenceFormData = z.infer<typeof presenceSchema>;
 // ========================================
 
 export const emargementPublicSchema = z.object({
-  etudiantId: z.string().min(1, 'Veuillez sélectionner votre nom'),
-  present: z.boolean().optional(),
+  presenceId: z.string().min(1, 'Veuillez sélectionner votre nom'),
   signature: z.string().min(1, 'La signature est requise'),
 });
 

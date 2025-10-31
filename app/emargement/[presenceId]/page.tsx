@@ -1,28 +1,59 @@
 /**
- * Page Formulaire d'Émargement Public - /app/formulaires/[sessionId]/page.tsx
- * Page publique pour que les étudiants confirment leur présence
+ * Page Émargement Individuel - /app/emargement/[presenceId]/page.tsx
+ * Page publique pour qu'un étudiant confirme SA présence
+ * Accessible via lien unique envoyé par email
  */
 
-import { getRecord, getRecords } from '@/lib/airtable';
-import type { SessionFields, CoursFields, InscriptionFields, EtudiantFields } from '@/lib/airtable';
+import { getRecord } from '@/lib/airtable';
+import type { PresenceFields, SessionFields, CoursFields, EtudiantFields } from '@/lib/airtable';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AttendanceForm } from '@/components/custom/AttendanceForm';
-import { Calendar, BookOpen } from 'lucide-react';
+import { Calendar, BookOpen, User } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { parseAirtableDate } from '@/lib/date-utils';
 
 interface EmargementPageProps {
   params: Promise<{
-    sessionId: string;
+    presenceId: string;
   }>;
 }
 
 export default async function EmargementPage({ params }: EmargementPageProps) {
   // Next.js 15: params est maintenant une Promise
-  const { sessionId } = await params;
+  const { presenceId } = await params;
+
+  // Récupérer la présence
+  const presence = await getRecord<PresenceFields>(
+    process.env.AIRTABLE_TABLE_PRESENCES || 'Présences',
+    presenceId
+  );
+
+  // Récupérer l'étudiant
+  const etudiantId = presence.fields.Étudiant?.[0];
+  if (!etudiantId) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-muted-foreground">Aucun étudiant associé à cette présence</p>
+      </div>
+    );
+  }
+
+  const etudiant = await getRecord<EtudiantFields>(
+    process.env.AIRTABLE_TABLE_ETUDIANTS || 'Étudiants',
+    etudiantId
+  );
 
   // Récupérer la session
+  const sessionId = presence.fields.Session?.[0];
+  if (!sessionId) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-muted-foreground">Aucune session associée à cette présence</p>
+      </div>
+    );
+  }
+
   const session = await getRecord<SessionFields>(
     process.env.AIRTABLE_TABLE_SESSIONS || 'Sessions',
     sessionId
@@ -37,34 +68,14 @@ export default async function EmargementPage({ params }: EmargementPageProps) {
       )
     : null;
 
-  // Récupérer toutes les présences pour cette session (créées automatiquement par Airtable)
-  const allPresences = await getRecords<PresenceFields>(
-    process.env.AIRTABLE_TABLE_PRESENCES || 'Présences'
-  );
-  
-  // Filtrer manuellement par sessionId
-  const presences = allPresences.filter(p => p.fields.Session?.[0] === sessionId);
-
-  // Récupérer les informations des étudiants pour chaque présence
-  const presencesWithEtudiants = await Promise.all(
-    presences.map(async (presence) => {
-      const etudiantId = presence.fields.Étudiant?.[0];
-      if (!etudiantId) return null;
-      
-      const etudiant = await getRecord<EtudiantFields>(
-        process.env.AIRTABLE_TABLE_ETUDIANTS || 'Étudiants',
-        etudiantId
-      );
-      
-      return {
-        presence,
-        etudiant,
-      };
-    })
-  ).then(results => results.filter(Boolean) as Array<{
-    presence: AirtableRecord<PresenceFields>;
-    etudiant: AirtableRecord<EtudiantFields>;
-  }>);
+  // Vérifier si déjà signé
+  const presentValue: any = presence.fields['Présent ?'];
+  const isAlreadySigned = 
+    (typeof presentValue === 'string' && 
+     (presentValue.toLowerCase() === 'oui' || 
+      presentValue.toLowerCase() === 'présent' ||
+      presentValue.toLowerCase() === 'present')) ||
+    (typeof presentValue === 'boolean' && presentValue === true);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-zinc-50 to-zinc-100 dark:from-zinc-900 dark:to-black py-12">
@@ -76,6 +87,26 @@ export default async function EmargementPage({ params }: EmargementPageProps) {
             Confirmez votre présence pour cette session de formation
           </p>
         </div>
+
+        {/* Informations de l'étudiant */}
+        <Card className="mb-6 border-primary/20">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <User className="h-5 w-5" />
+              Étudiant
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-lg font-semibold">
+              {etudiant.fields.Prénom} {etudiant.fields.Nom}
+            </p>
+            {etudiant.fields.Email && (
+              <p className="text-sm text-muted-foreground mt-1">
+                {etudiant.fields.Email}
+              </p>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Informations de la session */}
         <Card className="mb-6">
@@ -118,22 +149,17 @@ export default async function EmargementPage({ params }: EmargementPageProps) {
           <CardHeader>
             <CardTitle>Confirmer ma Présence</CardTitle>
             <CardDescription>
-              Sélectionnez votre nom et signez pour confirmer votre présence à cette session.
+              Signez pour confirmer votre présence à cette session.
               Conformément aux exigences Qualiopi, votre signature électronique et l'horodatage
               seront enregistrés.
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {presencesWithEtudiants.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                Aucune présence générée pour cette session
-              </div>
-            ) : (
-              <AttendanceForm
-                session={session}
-                presencesWithEtudiants={presencesWithEtudiants}
-              />
-            )}
+            <AttendanceForm
+              presenceId={presence.id}
+              etudiant={etudiant}
+              isAlreadySigned={isAlreadySigned}
+            />
           </CardContent>
         </Card>
 

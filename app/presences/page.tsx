@@ -418,6 +418,7 @@ export default function PresencesPage() {
                     <TableHead>Statut</TableHead>
                     <TableHead>Signature</TableHead>
                     <TableHead>Horodatage</TableHead>
+                    <TableHead>Lien</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -483,6 +484,21 @@ export default function PresencesPage() {
                         </TableCell>
                         <TableCell className="text-sm text-muted-foreground">
                           {formatDateTime(presence.fields.Horodatage)}
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            asChild
+                          >
+                            <a
+                              href={`/emargement/${presence.id}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              Ouvrir
+                            </a>
+                          </Button>
                         </TableCell>
                       </TableRow>
                     );

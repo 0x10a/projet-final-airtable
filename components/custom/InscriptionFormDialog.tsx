@@ -4,7 +4,7 @@
 
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { inscriptionSchema, type InscriptionFormData } from '@/lib/schemas';
@@ -32,9 +32,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import { toast } from 'sonner';
 import { useQuery } from '@tanstack/react-query';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Plus, Check, ChevronsUpDown } from 'lucide-react';
+import { EtudiantFormDialog } from '@/components/custom/EtudiantFormDialog';
+import { cn } from '@/lib/utils';
 
 interface InscriptionFormDialogProps {
   open: boolean;
@@ -73,9 +80,14 @@ export function InscriptionFormDialog({
   onSuccess,
 }: InscriptionFormDialogProps) {
   const isEditing = !!inscription;
+  const [etudiantSearch, setEtudiantSearch] = useState('');
+  const [etudiantOpen, setEtudiantOpen] = useState(false);
+  const [isEtudiantDialogOpen, setIsEtudiantDialogOpen] = useState(false);
+  const [coursSearch, setCoursSearch] = useState('');
+  const [coursOpen, setCoursOpen] = useState(false);
 
   // Récupérer les étudiants pour le select
-  const { data: etudiants, isLoading: etudiantsLoading } = useQuery<Etudiant[]>({
+  const { data: etudiants, isLoading: etudiantsLoading, refetch: refetchEtudiants } = useQuery<Etudiant[]>({
     queryKey: ['etudiants'],
     queryFn: async () => {
       const res = await fetch('/api/airtable?tableName=Étudiants');
@@ -84,6 +96,18 @@ export function InscriptionFormDialog({
       return data.records || [];
     },
   });
+
+  // Filtrer les étudiants selon la recherche
+  const filteredEtudiants = useMemo(() => {
+    if (!etudiants) return [];
+    if (!etudiantSearch) return etudiants;
+    
+    const search = etudiantSearch.toLowerCase();
+    return etudiants.filter(e => {
+      const fullName = `${e.fields.Prénom} ${e.fields.Nom}`.toLowerCase();
+      return fullName.includes(search);
+    });
+  }, [etudiants, etudiantSearch]);
 
   // Récupérer les cours pour le select
   const { data: cours, isLoading: coursLoading } = useQuery<Cours[]>({
@@ -95,6 +119,18 @@ export function InscriptionFormDialog({
       return data.records || [];
     },
   });
+
+  // Filtrer les cours selon la recherche
+  const filteredCours = useMemo(() => {
+    if (!cours) return [];
+    if (!coursSearch) return cours;
+    
+    const search = coursSearch.toLowerCase();
+    return cours.filter(c => {
+      const coursName = c.fields['Nom du cours'].toLowerCase();
+      return coursName.includes(search);
+    });
+  }, [cours, coursSearch]);
 
   const form = useForm<InscriptionFormData>({
     resolver: zodResolver(inscriptionSchema),
@@ -184,73 +220,167 @@ export function InscriptionFormDialog({
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            {/* Étudiant */}
+            {/* Étudiant avec recherche */}
             <FormField
               control={form.control}
               name="Étudiant"
               render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Étudiant</FormLabel>
-                  <Select
-                    disabled={etudiantsLoading}
-                    onValueChange={(value) => field.onChange([value])}
-                    value={field.value?.[0] || ''}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Sélectionner un étudiant" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {etudiantsLoading ? (
-                        <div className="flex items-center justify-center p-4">
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        </div>
-                      ) : (
-                        etudiants?.map((etudiant) => (
-                          <SelectItem key={etudiant.id} value={etudiant.id}>
-                            {etudiant.fields.Prénom} {etudiant.fields.Nom}
-                          </SelectItem>
-                        ))
-                      )}
-                    </SelectContent>
-                  </Select>
+                <FormItem className="flex flex-col">
+                  <div className="flex items-center justify-between">
+                    <FormLabel>Étudiant</FormLabel>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setIsEtudiantDialogOpen(true)}
+                      className="h-8 text-xs"
+                    >
+                      <Plus className="h-3 w-3 mr-1" />
+                      Nouvel étudiant
+                    </Button>
+                  </div>
+                  <Popover open={etudiantOpen} onOpenChange={setEtudiantOpen}>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          className={cn(
+                            "w-full justify-between",
+                            !field.value?.[0] && "text-muted-foreground"
+                          )}
+                        >
+                          {field.value?.[0]
+                            ? etudiants?.find((e) => e.id === field.value?.[0])
+                                ? `${etudiants.find((e) => e.id === field.value?.[0])?.fields.Prénom} ${etudiants.find((e) => e.id === field.value?.[0])?.fields.Nom}`
+                                : "Sélectionner un étudiant"
+                            : "Sélectionner un étudiant"}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[400px] p-0" onWheel={(e) => e.stopPropagation()}>
+                      <div className="p-2">
+                        <Input
+                          placeholder="Rechercher un étudiant..."
+                          value={etudiantSearch}
+                          onChange={(e) => setEtudiantSearch(e.target.value)}
+                          className="mb-2"
+                        />
+                      </div>
+                      <div className="max-h-[300px] overflow-y-auto overscroll-contain">
+                        {etudiantsLoading ? (
+                          <div className="flex items-center justify-center p-4">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          </div>
+                        ) : filteredEtudiants.length === 0 ? (
+                          <div className="p-4 text-sm text-muted-foreground text-center">
+                            Aucun étudiant trouvé
+                          </div>
+                        ) : (
+                          filteredEtudiants.map((etudiant) => (
+                            <button
+                              key={etudiant.id}
+                              type="button"
+                              onClick={() => {
+                                field.onChange([etudiant.id]);
+                                setEtudiantOpen(false);
+                                setEtudiantSearch('');
+                              }}
+                              className={cn(
+                                "w-full flex items-center px-3 py-2 text-sm hover:bg-accent cursor-pointer",
+                                field.value?.[0] === etudiant.id && "bg-accent"
+                              )}
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  field.value?.[0] === etudiant.id ? "opacity-100" : "opacity-0"
+                                )}
+                              />
+                              {etudiant.fields.Prénom} {etudiant.fields.Nom}
+                            </button>
+                          ))
+                        )}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
-            {/* Cours */}
+            {/* Cours avec recherche */}
             <FormField
               control={form.control}
               name="Cours"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="flex flex-col">
                   <FormLabel>Cours</FormLabel>
-                  <Select
-                    disabled={coursLoading}
-                    onValueChange={(value) => field.onChange([value])}
-                    value={field.value?.[0] || ''}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Sélectionner un cours" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {coursLoading ? (
-                        <div className="flex items-center justify-center p-4">
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        </div>
-                      ) : (
-                        cours?.map((c) => (
-                          <SelectItem key={c.id} value={c.id}>
-                            {c.fields['Nom du cours']}
-                          </SelectItem>
-                        ))
-                      )}
-                    </SelectContent>
-                  </Select>
+                  <Popover open={coursOpen} onOpenChange={setCoursOpen}>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          className={cn(
+                            "w-full justify-between",
+                            !field.value?.[0] && "text-muted-foreground"
+                          )}
+                        >
+                          {field.value?.[0]
+                            ? cours?.find((c) => c.id === field.value?.[0])?.fields['Nom du cours'] || "Sélectionner un cours"
+                            : "Sélectionner un cours"}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[450px] p-0" onWheel={(e) => e.stopPropagation()}>
+                      <div className="p-2">
+                        <Input
+                          placeholder="Rechercher un cours..."
+                          value={coursSearch}
+                          onChange={(e) => setCoursSearch(e.target.value)}
+                          className="mb-2"
+                        />
+                      </div>
+                      <div className="max-h-[300px] overflow-y-auto overscroll-contain">
+                        {coursLoading ? (
+                          <div className="flex items-center justify-center p-4">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          </div>
+                        ) : filteredCours.length === 0 ? (
+                          <div className="p-4 text-sm text-muted-foreground text-center">
+                            Aucun cours trouvé
+                          </div>
+                        ) : (
+                          filteredCours.map((c) => (
+                            <button
+                              key={c.id}
+                              type="button"
+                              onClick={() => {
+                                field.onChange([c.id]);
+                                setCoursOpen(false);
+                                setCoursSearch('');
+                              }}
+                              className={cn(
+                                "w-full flex items-center px-3 py-2 text-sm hover:bg-accent cursor-pointer",
+                                field.value?.[0] === c.id && "bg-accent"
+                              )}
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  field.value?.[0] === c.id ? "opacity-100" : "opacity-0"
+                                )}
+                              />
+                              {c.fields['Nom du cours']}
+                            </button>
+                          ))
+                        )}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
                   <FormMessage />
                 </FormItem>
               )}
@@ -323,6 +453,18 @@ export function InscriptionFormDialog({
           </form>
         </Form>
       </DialogContent>
+
+      {/* Dialog pour ajouter un étudiant */}
+      <EtudiantFormDialog
+        open={isEtudiantDialogOpen}
+        onOpenChange={setIsEtudiantDialogOpen}
+        etudiant={null}
+        onSuccess={() => {
+          refetchEtudiants();
+          setIsEtudiantDialogOpen(false);
+          toast.success('Étudiant ajouté ! Vous pouvez maintenant le sélectionner.');
+        }}
+      />
     </Dialog>
   );
 }
