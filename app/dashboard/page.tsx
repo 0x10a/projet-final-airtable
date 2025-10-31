@@ -12,8 +12,9 @@ import { SessionsCalendar } from '@/components/custom/SessionsCalendar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import Link from 'next/link';
 import { BookOpen, Calendar, Users, FileText, TrendingUp, AlertTriangle, Award, CheckCircle2 } from 'lucide-react';
-import { format, isFuture, parseISO, subDays, startOfMonth } from 'date-fns';
+import { format, isFuture, subDays, startOfMonth } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { parseAirtableDate, formatDateShort } from '@/lib/date-utils';
 import { Badge } from '@/components/ui/badge';
 
 interface Etudiant {
@@ -121,7 +122,8 @@ export default function DashboardPage() {
     const totalCours = cours?.length || 0;
     const sessionsAVenir = sessions?.filter(s => {
       const date = s.fields['Date de la session'];
-      return date && isFuture(parseISO(date));
+      const parsedDate = parseAirtableDate(date);
+      return parsedDate && isFuture(parsedDate);
     }).length || 0;
     
     const totalPresences = presences?.length || 0;
@@ -132,13 +134,15 @@ export default function DashboardPage() {
     const startMonth = startOfMonth(new Date());
     const inscriptionsCeMois = inscriptions?.filter(i => {
       const date = i.fields["Date d'inscription"];
-      return date && parseISO(date) >= startMonth;
+      const parsedDate = parseAirtableDate(date);
+      return parsedDate && parsedDate >= startMonth;
     }).length || 0;
 
     // Sessions sans émargement
     const sessionsSansEmargement = sessions?.filter(s => {
       const date = s.fields['Date de la session'];
-      const isPast = date && !isFuture(parseISO(date));
+      const parsedDate = parseAirtableDate(date);
+      const isPast = parsedDate && !isFuture(parsedDate);
       const hasPresences = (s.fields.Présences?.length || 0) > 0;
       return isPast && !hasPresences;
     }).length || 0;
@@ -149,7 +153,8 @@ export default function DashboardPage() {
       presences
         ?.filter(p => {
           const horodatage = p.fields.Horodatage;
-          return horodatage && parseISO(horodatage) >= date30DaysAgo;
+          const parsedDate = parseAirtableDate(horodatage);
+          return parsedDate && parsedDate >= date30DaysAgo;
         })
         .map(p => p.fields.Étudiant?.[0])
         .filter(Boolean) || []
@@ -199,7 +204,8 @@ export default function DashboardPage() {
     return sessions
       .filter(s => {
         const date = s.fields['Date de la session'];
-        return date && isFuture(parseISO(date));
+        const parsedDate = parseAirtableDate(date);
+        return parsedDate && isFuture(parsedDate);
       })
       .slice(0, 5);
   }, [sessions]);
@@ -349,7 +355,7 @@ export default function DashboardPage() {
                       </p>
                     </div>
                     <Badge variant="outline">
-                      {format(parseISO(session.fields['Date de la session']), 'dd MMM', { locale: fr })}
+                      {formatDateShort(session.fields['Date de la session'])}
                     </Badge>
                   </div>
                 ))}

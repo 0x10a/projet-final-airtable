@@ -10,8 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { ArrowLeft, Calendar, User, Clock, Target, FileText } from 'lucide-react';
-import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { formatDateShort, formatDateLong } from '@/lib/date-utils';
 import {
   Table,
   TableBody,
@@ -37,18 +36,26 @@ export default async function CourseDetailPage({ params }: CourseDetailPageProps
     id
   );
 
-  // Récupérer les inscriptions pour ce cours
-  const inscriptions = await getRecords<InscriptionFields>(
-    process.env.AIRTABLE_TABLE_INSCRIPTIONS || 'Inscriptions',
-    {
-      filterByFormula: `FIND("${id}", ARRAYJOIN({Cours}))`,
-    }
+  // Récupérer TOUTES les inscriptions
+  const allInscriptions = await getRecords<InscriptionFields>(
+    process.env.AIRTABLE_TABLE_INSCRIPTIONS || 'Inscriptions'
   );
 
-  // Récupérer les étudiants inscrits
-  const etudiantIds = inscriptions
-    .map(i => i.fields.Étudiant?.[0])
-    .filter(id => id && id !== 'undefined' && id !== 'null') as string[]; // Filtrer les IDs invalides
+  // Filtrer côté serveur pour ce cours spécifique
+  const inscriptions = allInscriptions.filter(inscription => {
+    const coursIds = inscription.fields.Cours || [];
+    return coursIds.includes(id);
+  });
+
+  // Récupérer les étudiants inscrits (IDs uniques)
+  const etudiantIdsSet = new Set<string>();
+  inscriptions.forEach(inscription => {
+    const etudiantId = inscription.fields.Étudiant?.[0];
+    if (etudiantId && etudiantId !== 'undefined' && etudiantId !== 'null') {
+      etudiantIdsSet.add(etudiantId);
+    }
+  });
+  const etudiantIds = Array.from(etudiantIdsSet);
 
   const etudiants = etudiantIds.length > 0
     ? (await Promise.all(
@@ -132,14 +139,12 @@ export default async function CourseDetailPage({ params }: CourseDetailPageProps
                 <p className="font-medium">{course.fields.Formateur}</p>
               </div>
             )}
-            {course.fields['Date de début'] && (
+            {course.fields['Date de début'] && formatDateLong(course.fields['Date de début']) !== '-' && (
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Date de début</p>
                 <p className="font-medium flex items-center gap-2">
                   <Calendar className="h-4 w-4" />
-                  {format(new Date(course.fields['Date de début']), 'dd MMMM yyyy', {
-                    locale: fr,
-                  })}
+                  {formatDateLong(course.fields['Date de début'])}
                 </p>
               </div>
             )}
@@ -182,21 +187,6 @@ export default async function CourseDetailPage({ params }: CourseDetailPageProps
         </Card>
       </div>
 
-      {/* Programme */}
-      {course.fields.Programme && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5" />
-              Programme
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="whitespace-pre-wrap">{course.fields.Programme}</p>
-          </CardContent>
-        </Card>
-      )}
-
       {/* Sessions */}
       <Card>
         <CardHeader>
@@ -226,13 +216,7 @@ export default async function CourseDetailPage({ params }: CourseDetailPageProps
                       {session.fields['Nom de la session']}
                     </TableCell>
                     <TableCell>
-                      {session.fields['Date de la session']
-                        ? format(
-                            new Date(session.fields['Date de la session']),
-                            'dd MMM yyyy',
-                            { locale: fr }
-                          )
-                        : '-'}
+                      {formatDateShort(session.fields['Date de la session'])}
                     </TableCell>
                     <TableCell>
                       <Link href={`/formulaires/${session.id}`}>
@@ -268,19 +252,46 @@ export default async function CourseDetailPage({ params }: CourseDetailPageProps
                 <TableRow>
                   <TableHead>Nom</TableHead>
                   <TableHead>Email</TableHead>
-                  <TableHead>Téléphone</TableHead>
+                  <TableHead>Date d'inscription</TableHead>
+                  <TableHead>Statut</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {etudiants.map(etudiant => (
-                  <TableRow key={etudiant.id}>
-                    <TableCell className="font-medium">
-                      {etudiant.fields.Prénom} {etudiant.fields.Nom}
-                    </TableCell>
-                    <TableCell>{etudiant.fields.Email}</TableCell>
-                    <TableCell>{etudiant.fields.Téléphone || '-'}</TableCell>
-                  </TableRow>
-                ))}
+                {etudiants.map(etudiant => {
+                  // Trouver l'inscription de cet étudiant pour ce cours
+                  const inscription = inscriptions.find(
+                    i => i.fields.Étudiant?.[0] === etudiant.id
+                  );
+
+                  return (
+                    <TableRow key={etudiant.id}>
+                      <TableCell className="font-medium">
+                        {etudiant.fields.Prénom} {etudiant.fields.Nom}
+                      </TableCell>
+                      <TableCell>{etudiant.fields.Email}</TableCell>
+                      <TableCell>
+                        {formatDateShort(inscription?.fields["Date d'inscription"])}
+                      </TableCell>
+                      <TableCell>
+                        {inscription?.fields.Statut ? (
+                          <Badge
+                            variant={
+                              inscription.fields.Statut === 'Inscrit'
+                                ? 'default'
+                                : inscription.fields.Statut === 'Terminé'
+                                ? 'secondary'
+                                : 'destructive'
+                            }
+                          >
+                            {inscription.fields.Statut}
+                          </Badge>
+                        ) : (
+                          '-'
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           )}

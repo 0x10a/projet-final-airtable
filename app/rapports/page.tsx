@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/select';
 import { FileText, Download, Calendar, Users, CheckSquare, BarChart3 } from 'lucide-react';
 import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { formatDateNumeric, formatDateTime, formatDateShort } from '@/lib/date-utils';
 import { toast } from 'sonner';
 
 interface Session {
@@ -164,14 +164,14 @@ export default function RapportsPage() {
       const etudiant = etudiants?.find(e => e.id === etudiantId);
       
       return [
-        sessionDate ? format(new Date(sessionDate), 'dd/MM/yyyy', { locale: fr }) : '',
+        formatDateNumeric(sessionDate),
         session.fields['Nom de la session'],
         coursName,
         etudiant ? `${etudiant.fields.Nom} ${etudiant.fields.Prénom}` : '',
         etudiant?.fields.Email || '',
         p.fields['Présent ?'] ? 'Oui' : 'Non',
         p.fields.Signature || '',
-        p.fields.Horodatage ? format(new Date(p.fields.Horodatage), 'dd/MM/yyyy HH:mm', { locale: fr }) : '',
+        formatDateTime(p.fields.Horodatage),
       ];
     });
 
@@ -238,11 +238,11 @@ export default function RapportsPage() {
       return [
         coursObj.fields['Nom du cours'],
         getSessionName(sessionId),
-        sessionDate ? format(new Date(sessionDate), 'dd/MM/yyyy', { locale: fr }) : '',
+        formatDateNumeric(sessionDate),
         etudiant ? `${etudiant.fields.Nom} ${etudiant.fields.Prénom}` : '',
         etudiant?.fields.Email || '',
         p.fields['Présent ?'] ? 'Présent' : 'Absent',
-        p.fields.Horodatage ? format(new Date(p.fields.Horodatage), 'dd/MM/yyyy HH:mm', { locale: fr }) : '',
+        formatDateTime(p.fields.Horodatage),
       ];
     });
 
@@ -366,7 +366,7 @@ export default function RapportsPage() {
                   {sessions?.map(session => (
                     <SelectItem key={session.id} value={session.id}>
                       {session.fields['Nom de la session']} - {' '}
-                      {format(new Date(session.fields['Date de la session']), 'dd MMM yyyy', { locale: fr })}
+                      {formatDateShort(session.fields['Date de la session'])}
                     </SelectItem>
                   ))}
                 </SelectContent>

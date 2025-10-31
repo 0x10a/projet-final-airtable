@@ -10,10 +10,16 @@ import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Plus, UserPlus, Edit, Trash2, Search } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Plus, UserPlus, Edit, Trash2, Search, Filter } from 'lucide-react';
 import { InscriptionFormDialog } from '@/components/custom/InscriptionFormDialog';
-import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { formatDateShort } from '@/lib/date-utils';
 import {
   Table,
   TableBody,
@@ -54,6 +60,7 @@ export default function InscriptionsPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingInscription, setEditingInscription] = useState<Inscription | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCours, setSelectedCours] = useState<string>('all');
 
   // Récupérer toutes les inscriptions
   const { data: inscriptions, isLoading, refetch } = useQuery<Inscription[]>({
@@ -165,20 +172,28 @@ export default function InscriptionsPage() {
     );
   }
 
-  // Filtrer les inscriptions selon la recherche
+  // Filtrer les inscriptions selon la recherche et le cours sélectionné
   const filteredInscriptions = inscriptions?.filter(inscription => {
-    if (!searchTerm) return true;
-    
     const etudiantId = inscription.fields.Étudiant?.[0];
     const coursId = inscription.fields.Cours?.[0];
     
-    const etudiantName = etudiantId ? getEtudiantName(etudiantId).toLowerCase() : '';
-    const coursName = coursId ? getCoursName(coursId).toLowerCase() : '';
-    const statut = inscription.fields.Statut?.toLowerCase() || '';
+    // Filtre par cours
+    if (selectedCours !== 'all' && coursId !== selectedCours) {
+      return false;
+    }
     
-    return etudiantName.includes(searchTerm.toLowerCase()) ||
-           coursName.includes(searchTerm.toLowerCase()) ||
-           statut.includes(searchTerm.toLowerCase());
+    // Filtre par recherche texte
+    if (searchTerm) {
+      const etudiantName = etudiantId ? getEtudiantName(etudiantId).toLowerCase() : '';
+      const coursName = coursId ? getCoursName(coursId).toLowerCase() : '';
+      const statut = inscription.fields.Statut?.toLowerCase() || '';
+      
+      return etudiantName.includes(searchTerm.toLowerCase()) ||
+             coursName.includes(searchTerm.toLowerCase()) ||
+             statut.includes(searchTerm.toLowerCase());
+    }
+    
+    return true;
   }) || [];
 
   // Statistiques par statut
@@ -240,20 +255,54 @@ export default function InscriptionsPage() {
         </Card>
       </div>
 
-      {/* Barre de recherche */}
+      {/* Barre de recherche et filtres */}
       <Card>
         <CardHeader>
-          <CardTitle>Rechercher une inscription</CardTitle>
+          <CardTitle>Rechercher et filtrer</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center gap-2">
-            <Search className="h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Rechercher par étudiant, cours ou statut..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="max-w-md"
-            />
+          <div className="flex flex-col md:flex-row gap-4">
+            {/* Recherche texte */}
+            <div className="flex items-center gap-2 flex-1">
+              <Search className="h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Rechercher par étudiant, cours ou statut..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="flex-1"
+              />
+            </div>
+
+            {/* Filtre par cours */}
+            <div className="flex items-center gap-2 w-full md:w-[300px]">
+              <Filter className="h-4 w-4 text-muted-foreground" />
+              <Select value={selectedCours} onValueChange={setSelectedCours}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Filtrer par cours" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tous les cours</SelectItem>
+                  {cours?.map(c => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.fields['Nom du cours']}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Bouton de réinitialisation des filtres */}
+            {(searchTerm || selectedCours !== 'all') && (
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setSearchTerm('');
+                  setSelectedCours('all');
+                }}
+              >
+                Réinitialiser
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -302,9 +351,7 @@ export default function InscriptionsPage() {
                         {coursId ? getCoursName(coursId) : '-'}
                       </TableCell>
                       <TableCell>
-                        {dateInscription
-                          ? format(new Date(dateInscription), 'dd MMM yyyy', { locale: fr })
-                          : '-'}
+                        {formatDateShort(dateInscription)}
                       </TableCell>
                       <TableCell>
                         <Badge variant={getStatutBadgeVariant(inscription.fields.Statut)}>

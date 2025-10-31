@@ -11,8 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Plus, Calendar, BookOpen, Edit, Trash2 } from 'lucide-react';
 import { SessionFormDialog } from '@/components/custom/SessionFormDialog';
-import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { parseAirtableDate, formatDateShort } from '@/lib/date-utils';
 import {
   Table,
   TableBody,
@@ -125,8 +124,8 @@ export default function SessionsPage() {
   }
 
   const sortedSessions = [...(sessions || [])].sort((a, b) => {
-    const dateA = new Date(a.fields['Date de la session']).getTime();
-    const dateB = new Date(b.fields['Date de la session']).getTime();
+    const dateA = parseAirtableDate(a.fields['Date de la session'])?.getTime() || 0;
+    const dateB = parseAirtableDate(b.fields['Date de la session'])?.getTime() || 0;
     return dateB - dateA; // Plus récent en premier
   });
 
@@ -162,7 +161,10 @@ export default function SessionsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">
-              {sessions?.filter(s => new Date(s.fields['Date de la session']) > new Date()).length || 0}
+              {sessions?.filter(s => {
+                const date = parseAirtableDate(s.fields['Date de la session']);
+                return date && date > new Date();
+              }).length || 0}
             </div>
           </CardContent>
         </Card>
@@ -172,7 +174,10 @@ export default function SessionsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">
-              {sessions?.filter(s => new Date(s.fields['Date de la session']) <= new Date()).length || 0}
+              {sessions?.filter(s => {
+                const date = parseAirtableDate(s.fields['Date de la session']);
+                return date && date <= new Date();
+              }).length || 0}
             </div>
           </CardContent>
         </Card>
@@ -205,8 +210,8 @@ export default function SessionsPage() {
               </TableHeader>
               <TableBody>
                 {sortedSessions.map(session => {
-                  const sessionDate = new Date(session.fields['Date de la session']);
-                  const isUpcoming = sessionDate > new Date();
+                  const sessionDate = parseAirtableDate(session.fields['Date de la session']);
+                  const isUpcoming = sessionDate ? sessionDate > new Date() : false;
                   const coursId = session.fields.Cours?.[0];
 
                   return (
@@ -227,7 +232,7 @@ export default function SessionsPage() {
                       <TableCell>
                         <div className="flex items-center gap-1 text-sm">
                           <Calendar className="h-3 w-3" />
-                          {format(sessionDate, 'dd MMM yyyy', { locale: fr })}
+                          {formatDateShort(session.fields['Date de la session'])}
                         </div>
                       </TableCell>
                       <TableCell>

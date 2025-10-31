@@ -25,16 +25,14 @@ export type EtudiantFormData = z.infer<typeof etudiantSchema>;
 // ========================================
 
 export const coursSchema = z.object({
-  'Nom du cours': z.string().min(3, 'Le nom du cours doit contenir au moins 3 caractères'),
-  Sujet: z.string().optional(),
+  Sujet: z.string().min(1, 'Le sujet est obligatoire'),
   Niveau: z.enum(['Débutant', 'Intermédiaire', 'Avancé', 'Expert']).optional(),
-  'Date de début': z.string().optional(),
-  'Durée (jours)': z.number().positive('La durée doit être positive').optional(),
+  'Date de début': z.string().min(1, 'La date de début est obligatoire'),
+  'Durée (jours)': z.number().positive('La durée doit être positive').min(1, 'La durée est obligatoire'),
   Formateur: z.string().optional(),
   'Objectifs pédagogiques': z.string().optional(),
   Prérequis: z.string().optional(),
-  Programme: z.string().optional(),
-  Modalité: z.enum(['Présentiel', 'Distanciel', 'Hybride']).optional(),
+  Modalité: z.enum(['Présentiel', 'Distanciel', 'Hybride']),
 });
 
 export type CoursFormData = z.infer<typeof coursSchema>;

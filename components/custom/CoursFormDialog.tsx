@@ -50,7 +50,6 @@ interface CoursFormDialogProps {
       Formateur?: string;
       'Objectifs pédagogiques'?: string;
       Prérequis?: string;
-      Programme?: string;
       Modalité?: string;
     };
   } | null;
@@ -68,7 +67,6 @@ export function CoursFormDialog({
   const form = useForm<CoursFormData>({
     resolver: zodResolver(coursSchema),
     defaultValues: {
-      'Nom du cours': '',
       Sujet: '',
       Niveau: undefined,
       'Date de début': '',
@@ -76,7 +74,6 @@ export function CoursFormDialog({
       Formateur: '',
       'Objectifs pédagogiques': '',
       Prérequis: '',
-      Programme: '',
       Modalité: undefined,
     },
   });
@@ -85,7 +82,6 @@ export function CoursFormDialog({
   useEffect(() => {
     if (cours) {
       form.reset({
-        'Nom du cours': cours.fields['Nom du cours'],
         Sujet: cours.fields.Sujet || '',
         Niveau: cours.fields.Niveau as any,
         'Date de début': cours.fields['Date de début'] || '',
@@ -93,12 +89,10 @@ export function CoursFormDialog({
         Formateur: cours.fields.Formateur || '',
         'Objectifs pédagogiques': cours.fields['Objectifs pédagogiques'] || '',
         Prérequis: cours.fields.Prérequis || '',
-        Programme: cours.fields.Programme || '',
         Modalité: cours.fields.Modalité as any,
       });
     } else {
       form.reset({
-        'Nom du cours': '',
         Sujet: '',
         Niveau: undefined,
         'Date de début': '',
@@ -106,7 +100,6 @@ export function CoursFormDialog({
         Formateur: '',
         'Objectifs pédagogiques': '',
         Prérequis: '',
-        Programme: '',
         Modalité: undefined,
       });
     }
@@ -171,28 +164,13 @@ export function CoursFormDialog({
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            {/* Nom du cours */}
-            <FormField
-              control={form.control}
-              name="Nom du cours"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Nom du cours</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Ex: Photoshop Avancé" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
             {/* Sujet */}
             <FormField
               control={form.control}
               name="Sujet"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Sujet (optionnel)</FormLabel>
+                  <FormLabel>Sujet *</FormLabel>
                   <FormControl>
                     <Input placeholder="Ex: Design graphique" {...field} />
                   </FormControl>
@@ -235,7 +213,7 @@ export function CoursFormDialog({
                 name="Modalité"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Modalité (optionnel)</FormLabel>
+                    <FormLabel>Modalité *</FormLabel>
                     <Select
                       onValueChange={field.onChange}
                       value={field.value}
@@ -264,7 +242,7 @@ export function CoursFormDialog({
                 name="Date de début"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Date de début (optionnel)</FormLabel>
+                    <FormLabel>Date de début *</FormLabel>
                     <FormControl>
                       <Input type="date" {...field} />
                     </FormControl>
@@ -278,7 +256,7 @@ export function CoursFormDialog({
                 name="Durée (jours)"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Durée en jours (optionnel)</FormLabel>
+                    <FormLabel>Durée en jours *</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
@@ -344,26 +322,6 @@ export function CoursFormDialog({
                       placeholder="Connaissances requises..."
                       className="resize-none"
                       rows={2}
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Programme */}
-            <FormField
-              control={form.control}
-              name="Programme"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Programme (optionnel)</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Détails du programme..."
-                      className="resize-none"
-                      rows={4}
                       {...field}
                     />
                   </FormControl>

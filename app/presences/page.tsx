@@ -27,8 +27,8 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle2, XCircle, Download, Search, Filter } from 'lucide-react';
+import { formatDateShort, formatDateNumeric, formatDateTime } from '@/lib/date-utils';
 import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
 import { toast } from 'sonner';
 
 interface Presence {
@@ -211,13 +211,13 @@ export default function PresencesPage() {
       const date = getSessionDate(sessionId);
       
       return [
-        date ? format(new Date(date), 'dd/MM/yyyy', { locale: fr }) : '',
+        formatDateNumeric(date),
         getSessionName(sessionId),
         coursId ? getCoursName(coursId) : '',
         getEtudiantName(etudiantId),
         presence.fields['Présent ?'] ? 'Présent' : 'Absent',
         presence.fields.Signature || '',
-        presence.fields.Horodatage ? format(new Date(presence.fields.Horodatage), 'dd/MM/yyyy HH:mm', { locale: fr }) : '',
+        formatDateTime(presence.fields.Horodatage),
       ];
     });
 
@@ -397,7 +397,7 @@ export default function PresencesPage() {
                     return (
                       <TableRow key={presence.id}>
                         <TableCell>
-                          {date ? format(new Date(date), 'dd MMM yyyy', { locale: fr }) : '-'}
+                          {formatDateShort(date)}
                         </TableCell>
                         <TableCell className="font-medium">
                           {sessionId ? getSessionName(sessionId) : '-'}
@@ -425,9 +425,7 @@ export default function PresencesPage() {
                           {presence.fields.Signature || '-'}
                         </TableCell>
                         <TableCell className="text-sm text-muted-foreground">
-                          {presence.fields.Horodatage
-                            ? format(new Date(presence.fields.Horodatage), 'dd/MM/yyyy HH:mm', { locale: fr })
-                            : '-'}
+                          {formatDateTime(presence.fields.Horodatage)}
                         </TableCell>
                       </TableRow>
                     );

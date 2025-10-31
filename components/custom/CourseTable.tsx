@@ -13,8 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Eye, Edit, Trash2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { formatDateShort } from '@/lib/date-utils';
 import { toast } from 'sonner';
 
 interface CourseTableProps {
@@ -88,12 +87,7 @@ export function CourseTable({ courses, onEdit, onRefetch }: CourseTableProps) {
       header: 'Date de début',
       cell: ({ row }) => {
         const date = row.original.fields['Date de début'];
-        if (!date) return '-';
-        try {
-          return format(new Date(date), 'dd MMM yyyy', { locale: fr });
-        } catch {
-          return date;
-        }
+        return formatDateShort(date);
       },
     },
     {
