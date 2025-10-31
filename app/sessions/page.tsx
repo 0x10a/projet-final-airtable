@@ -5,11 +5,11 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Calendar, BookOpen, Trash2 } from 'lucide-react';
+import { Calendar, BookOpen, Trash2, X, ArrowUpDown } from 'lucide-react';
 import { parseAirtableDate, formatDateShort } from '@/lib/date-utils';
 import {
   Table,
@@ -21,6 +21,13 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 interface Session {
   id: string;
@@ -40,6 +47,10 @@ interface Cours {
 }
 
 export default function SessionsPage() {
+  const [selectedCours, setSelectedCours] = useState<string>('all');
+  const [sortBy, setSortBy] = useState<'nom' | 'date'>('date');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+
   // Récupérer toutes les sessions
   const { data: sessions, isLoading, refetch } = useQuery<Session[]>({
     queryKey: ['sessions'],
@@ -92,6 +103,44 @@ export default function SessionsPage() {
     return c?.fields['Nom du cours'] || 'Cours inconnu';
   };
 
+  // Liste des cours pour le filtre
+  const coursList = useMemo(() => {
+    if (!cours) return [];
+    return cours.map(c => ({
+      id: c.id,
+      name: c.fields['Nom du cours'],
+    }));
+  }, [cours]);
+
+  // Filtrer et trier les sessions
+  const filteredAndSortedSessions = useMemo(() => {
+    if (!sessions) return [];
+
+    // Filtrer par cours
+    let filtered = sessions;
+    if (selectedCours !== 'all') {
+      filtered = sessions.filter(s => s.fields.Cours?.[0] === selectedCours);
+    }
+
+    // Trier
+    const sorted = [...filtered].sort((a, b) => {
+      if (sortBy === 'date') {
+        const dateA = parseAirtableDate(a.fields['Date de la session'])?.getTime() || 0;
+        const dateB = parseAirtableDate(b.fields['Date de la session'])?.getTime() || 0;
+        return sortOrder === 'desc' ? dateB - dateA : dateA - dateB;
+      } else {
+        // Tri par nom
+        const nameA = a.fields['Nom de la session'].toLowerCase();
+        const nameB = b.fields['Nom de la session'].toLowerCase();
+        return sortOrder === 'desc' 
+          ? nameB.localeCompare(nameA)
+          : nameA.localeCompare(nameB);
+      }
+    });
+
+    return sorted;
+  }, [sessions, selectedCours, sortBy, sortOrder]);
+
   if (isLoading) {
     return (
       <div className="container mx-auto py-10">
@@ -99,12 +148,6 @@ export default function SessionsPage() {
       </div>
     );
   }
-
-  const sortedSessions = [...(sessions || [])].sort((a, b) => {
-    const dateA = parseAirtableDate(a.fields['Date de la session'])?.getTime() || 0;
-    const dateB = parseAirtableDate(b.fields['Date de la session'])?.getTime() || 0;
-    return dateB - dateA; // Plus récent en premier
-  });
 
   return (
     <div className="container mx-auto py-10 space-y-8">
@@ -154,6 +197,68 @@ export default function SessionsPage() {
         </Card>
       </div>
 
+      {/* Filtres et tri */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Filtres et Tri</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap gap-4">
+            {/* Filtre par cours */}
+            <div className="flex items-center gap-2">
+              <Select value={selectedCours} onValueChange={setSelectedCours}>
+                <SelectTrigger className="w-[250px]">
+                  <SelectValue placeholder="Filtrer par cours" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tous les cours</SelectItem>
+                  {coursList.map(c => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {selectedCours !== 'all' && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSelectedCours('all')}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+
+            {/* Tri */}
+            <div className="flex items-center gap-2">
+              <Select value={sortBy} onValueChange={(v) => setSortBy(v as 'nom' | 'date')}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="date">Trier par date</SelectItem>
+                  <SelectItem value="nom">Trier par nom</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+              >
+                <ArrowUpDown className="h-4 w-4 mr-1" />
+                {sortOrder === 'asc' ? 'Croissant' : 'Décroissant'}
+              </Button>
+            </div>
+
+            {/* Résultats */}
+            <div className="flex items-center text-sm text-muted-foreground ml-auto">
+              {filteredAndSortedSessions.length} session(s) affichée(s)
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Table des sessions */}
       <Card>
         <CardHeader>
@@ -163,9 +268,11 @@ export default function SessionsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {!sessions || sessions.length === 0 ? (
+          {!filteredAndSortedSessions || filteredAndSortedSessions.length === 0 ? (
             <p className="text-center py-8 text-muted-foreground">
-              Aucune session créée. Cliquez sur "Nouvelle Session" pour commencer.
+              {selectedCours !== 'all' 
+                ? 'Aucune session trouvée pour ce cours.'
+                : 'Aucune session créée. Cliquez sur "Nouvelle Session" pour commencer.'}
             </p>
           ) : (
             <Table>
@@ -180,7 +287,7 @@ export default function SessionsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {sortedSessions.map(session => {
+                {filteredAndSortedSessions.map((session: Session) => {
                   const sessionDate = parseAirtableDate(session.fields['Date de la session']);
                   const isUpcoming = sessionDate ? sessionDate > new Date() : false;
                   const coursId = session.fields.Cours?.[0];

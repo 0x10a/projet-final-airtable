@@ -8,10 +8,10 @@
 import { useRealtimeNotifications } from '@/hooks/useRealtimeNotifications';
 
 export function RealtimeNotifications() {
-  // Activer les notifications avec polling toutes les 15 secondes
+  // Activer les notifications avec polling toutes les 5 secondes pour réduire le délai
   useRealtimeNotifications({
     enabled: true,
-    pollingInterval: 15000, // 15 secondes
+    pollingInterval: 5000, // 5 secondes
   });
 
   return null; // Ce composant n'affiche rien, il gère juste les notifications

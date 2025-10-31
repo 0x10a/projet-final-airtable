@@ -17,9 +17,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Plus, UserPlus, Edit, Trash2, Search, Filter } from 'lucide-react';
+import { Plus, UserPlus, Edit, Trash2, Search, Filter, ArrowUpDown } from 'lucide-react';
 import { InscriptionFormDialog } from '@/components/custom/InscriptionFormDialog';
-import { formatDateShort } from '@/lib/date-utils';
+import { formatDateShort, parseAirtableDate } from '@/lib/date-utils';
 import {
   Table,
   TableBody,
@@ -61,6 +61,8 @@ export default function InscriptionsPage() {
   const [editingInscription, setEditingInscription] = useState<Inscription | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCours, setSelectedCours] = useState<string>('all');
+  const [sortBy, setSortBy] = useState<'date' | 'etudiant' | 'statut'>('date');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
   // Récupérer toutes les inscriptions
   const { data: inscriptions, isLoading, refetch } = useQuery<Inscription[]>({
@@ -172,7 +174,7 @@ export default function InscriptionsPage() {
     );
   }
 
-  // Filtrer les inscriptions selon la recherche et le cours sélectionné
+  // Filtrer et trier les inscriptions
   const filteredInscriptions = inscriptions?.filter(inscription => {
     const etudiantId = inscription.fields.Étudiant?.[0];
     const coursId = inscription.fields.Cours?.[0];
@@ -195,6 +197,28 @@ export default function InscriptionsPage() {
     
     return true;
   }) || [];
+
+  // Trier les inscriptions filtrées
+  const sortedInscriptions = [...filteredInscriptions].sort((a, b) => {
+    if (sortBy === 'date') {
+      const dateA = parseAirtableDate(a.fields["Date d'inscription"])?.getTime() || 0;
+      const dateB = parseAirtableDate(b.fields["Date d'inscription"])?.getTime() || 0;
+      return sortOrder === 'desc' ? dateB - dateA : dateA - dateB;
+    } else if (sortBy === 'etudiant') {
+      const etudiantA = a.fields.Étudiant?.[0] ? getEtudiantName(a.fields.Étudiant[0]).toLowerCase() : '';
+      const etudiantB = b.fields.Étudiant?.[0] ? getEtudiantName(b.fields.Étudiant[0]).toLowerCase() : '';
+      return sortOrder === 'desc' 
+        ? etudiantB.localeCompare(etudiantA)
+        : etudiantA.localeCompare(etudiantB);
+    } else {
+      // Tri par statut
+      const statutA = a.fields.Statut || '';
+      const statutB = b.fields.Statut || '';
+      return sortOrder === 'desc'
+        ? statutB.localeCompare(statutA)
+        : statutA.localeCompare(statutB);
+    }
+  });
 
   // Statistiques par statut
   const statsParStatut = {
@@ -255,29 +279,45 @@ export default function InscriptionsPage() {
         </Card>
       </div>
 
-      {/* Barre de recherche et filtres */}
+      {/* Barre de recherche */}
       <Card>
         <CardHeader>
-          <CardTitle>Rechercher et filtrer</CardTitle>
+          <CardTitle>Rechercher</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col md:flex-row gap-4">
-            {/* Recherche texte */}
-            <div className="flex items-center gap-2 flex-1">
-              <Search className="h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Rechercher par étudiant, cours ou statut..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="flex-1"
-              />
-            </div>
+          <div className="flex items-center gap-2">
+            <Search className="h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Rechercher par étudiant, cours ou statut..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="flex-1"
+            />
+            {searchTerm && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSearchTerm('')}
+              >
+                Effacer
+              </Button>
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
+      {/* Filtres et Tri */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Filtres et Tri</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap gap-4 items-center">
             {/* Filtre par cours */}
-            <div className="flex items-center gap-2 w-full md:w-[300px]">
+            <div className="flex items-center gap-2">
               <Filter className="h-4 w-4 text-muted-foreground" />
               <Select value={selectedCours} onValueChange={setSelectedCours}>
-                <SelectTrigger>
+                <SelectTrigger className="w-[250px]">
                   <SelectValue placeholder="Filtrer par cours" />
                 </SelectTrigger>
                 <SelectContent>
@@ -289,20 +329,43 @@ export default function InscriptionsPage() {
                   ))}
                 </SelectContent>
               </Select>
+              {selectedCours !== 'all' && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSelectedCours('all')}
+                >
+                  Réinitialiser
+                </Button>
+              )}
             </div>
 
-            {/* Bouton de réinitialisation des filtres */}
-            {(searchTerm || selectedCours !== 'all') && (
+            {/* Tri */}
+            <div className="flex items-center gap-2">
+              <Select value={sortBy} onValueChange={(v) => setSortBy(v as 'date' | 'etudiant' | 'statut')}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="date">Trier par date</SelectItem>
+                  <SelectItem value="etudiant">Trier par étudiant</SelectItem>
+                  <SelectItem value="statut">Trier par statut</SelectItem>
+                </SelectContent>
+              </Select>
               <Button
                 variant="outline"
-                onClick={() => {
-                  setSearchTerm('');
-                  setSelectedCours('all');
-                }}
+                size="sm"
+                onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
               >
-                Réinitialiser
+                <ArrowUpDown className="h-4 w-4 mr-1" />
+                {sortOrder === 'asc' ? 'Croissant' : 'Décroissant'}
               </Button>
-            )}
+            </div>
+
+            {/* Résultats */}
+            <div className="text-sm text-muted-foreground ml-auto">
+              {sortedInscriptions.length} inscription(s) affichée(s)
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -310,13 +373,13 @@ export default function InscriptionsPage() {
       {/* Table des inscriptions */}
       <Card>
         <CardHeader>
-          <CardTitle>Liste des Inscriptions ({filteredInscriptions.length})</CardTitle>
+          <CardTitle>Liste des Inscriptions ({sortedInscriptions.length})</CardTitle>
           <CardDescription>
             Gérez toutes les inscriptions des étudiants aux cours
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {!filteredInscriptions || filteredInscriptions.length === 0 ? (
+          {!sortedInscriptions || sortedInscriptions.length === 0 ? (
             <p className="text-center py-8 text-muted-foreground">
               {searchTerm
                 ? 'Aucune inscription trouvée pour cette recherche'
@@ -334,7 +397,7 @@ export default function InscriptionsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredInscriptions.map(inscription => {
+                {sortedInscriptions.map(inscription => {
                   const etudiantId = inscription.fields.Étudiant?.[0];
                   const coursId = inscription.fields.Cours?.[0];
                   const dateInscription = inscription.fields["Date d'inscription"];

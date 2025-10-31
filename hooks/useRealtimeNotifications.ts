@@ -101,13 +101,19 @@ export function useRealtimeNotifications(config: NotificationConfig = { enabled:
     // Vérifier les nouveaux cours
     if (cours && cours.length > previousCounts.current.cours) {
       const diff = cours.length - previousCounts.current.cours;
-      const latestCours = cours[cours.length - 1];
+      // Trier par date de création pour obtenir le plus récent
+      const sortedCours = [...cours].sort((a: any, b: any) => {
+        const dateA = new Date(a.createdTime || 0).getTime();
+        const dateB = new Date(b.createdTime || 0).getTime();
+        return dateB - dateA;
+      });
+      const latestCours = sortedCours[0];
       const coursName = latestCours?.fields?.['Nom du cours'] || latestCours?.fields?.Sujet || 'Nouveau cours';
       
-      toast.success(`Nouveau cours créé`, {
+      toast('📚 Nouveau cours créé', {
         description: coursName,
-        duration: 5000,
-        className: 'bg-blue-50 border-blue-200',
+        duration: 4000,
+        className: '[&_.sonner-toast-description]:text-foreground [&_.sonner-toast-description]:font-medium',
       });
       previousCounts.current.cours = cours.length;
     }
@@ -115,13 +121,22 @@ export function useRealtimeNotifications(config: NotificationConfig = { enabled:
     // Vérifier les nouvelles sessions
     if (sessions && sessions.length > previousCounts.current.sessions) {
       const diff = sessions.length - previousCounts.current.sessions;
-      const latestSession = sessions[sessions.length - 1];
+      // Trier par date de création pour obtenir la plus récente
+      const sortedSessions = [...sessions].sort((a: any, b: any) => {
+        const dateA = new Date(a.createdTime || 0).getTime();
+        const dateB = new Date(b.createdTime || 0).getTime();
+        return dateB - dateA;
+      });
+      const latestSession = sortedSessions[0];
       const sessionName = latestSession?.fields?.['Nom de la session'] || 'Nouvelle session';
       
-      toast.info(`Nouvelle session créée`, {
+      toast('📅 Nouvelle session créée', {
         description: sessionName,
-        duration: 5000,
-        className: 'bg-purple-50 border-purple-200',
+        duration: 4000,
+        style: {
+          '--description-color': 'hsl(var(--foreground))',
+        } as React.CSSProperties,
+        className: '[&_[data-description]]:!text-[--description-color] [&_[data-description]]:font-medium',
       });
       previousCounts.current.sessions = sessions.length;
     }
@@ -129,13 +144,19 @@ export function useRealtimeNotifications(config: NotificationConfig = { enabled:
     // Vérifier les nouveaux étudiants
     if (etudiants && etudiants.length > previousCounts.current.etudiants) {
       const diff = etudiants.length - previousCounts.current.etudiants;
-      const latestEtudiant = etudiants[etudiants.length - 1];
+      // Trier par date de création pour obtenir le plus récent
+      const sortedEtudiants = [...etudiants].sort((a: any, b: any) => {
+        const dateA = new Date(a.createdTime || 0).getTime();
+        const dateB = new Date(b.createdTime || 0).getTime();
+        return dateB - dateA;
+      });
+      const latestEtudiant = sortedEtudiants[0];
       const etudiantName = `${latestEtudiant?.fields?.Prénom || ''} ${latestEtudiant?.fields?.Nom || ''}`.trim() || 'Nouvel étudiant';
       
-      toast.success(`Nouvel étudiant inscrit`, {
+      toast('👤 Nouvel étudiant inscrit', {
         description: etudiantName,
-        duration: 5000,
-        className: 'bg-green-50 border-green-200',
+        duration: 4000,
+        className: '[&_.sonner-toast-description]:text-foreground [&_.sonner-toast-description]:font-medium',
       });
       previousCounts.current.etudiants = etudiants.length;
     }
@@ -144,10 +165,10 @@ export function useRealtimeNotifications(config: NotificationConfig = { enabled:
     if (inscriptions && inscriptions.length > previousCounts.current.inscriptions) {
       const diff = inscriptions.length - previousCounts.current.inscriptions;
       
-      toast(`Nouvelle inscription`, {
+      toast('✅ Nouvelle inscription', {
         description: `${diff} inscription${diff > 1 ? 's' : ''} ajoutée${diff > 1 ? 's' : ''}`,
-        duration: 5000,
-        className: 'bg-orange-50 border-orange-200',
+        duration: 4000,
+        className: '[&_.sonner-toast-description]:text-foreground [&_.sonner-toast-description]:font-medium',
       });
       previousCounts.current.inscriptions = inscriptions.length;
     }
