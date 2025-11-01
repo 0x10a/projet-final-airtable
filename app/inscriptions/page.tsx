@@ -5,8 +5,9 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -57,10 +58,14 @@ interface Cours {
 }
 
 export default function InscriptionsPage() {
+  const searchParams = useSearchParams();
+  const etudiantParam = searchParams.get('etudiant'); // Récupérer le paramètre étudiant de l'URL
+  
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingInscription, setEditingInscription] = useState<Inscription | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCours, setSelectedCours] = useState<string>('all');
+  const [selectedEtudiant, setSelectedEtudiant] = useState<string>('all');
   const [sortBy, setSortBy] = useState<'date' | 'etudiant' | 'statut'>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
@@ -152,6 +157,18 @@ export default function InscriptionsPage() {
     return c?.fields['Nom du cours'] || 'Cours inconnu';
   };
 
+  // Initialiser le filtre si un étudiant est passé en paramètre URL
+  useEffect(() => {
+    if (etudiantParam && etudiants) {
+      const etudiantFound = etudiants.find(e => 
+        `${e.fields.Prénom} ${e.fields.Nom}` === etudiantParam
+      );
+      if (etudiantFound) {
+        setSelectedEtudiant(etudiantFound.id);
+      }
+    }
+  }, [etudiantParam, etudiants]);
+
   // Obtenir la couleur du badge selon le statut
   const getStatutBadgeVariant = (statut?: string) => {
     switch (statut) {
@@ -181,6 +198,11 @@ export default function InscriptionsPage() {
     
     // Filtre par cours
     if (selectedCours !== 'all' && coursId !== selectedCours) {
+      return false;
+    }
+    
+    // Filtre par étudiant
+    if (selectedEtudiant !== 'all' && etudiantId !== selectedEtudiant) {
       return false;
     }
     
@@ -335,7 +357,36 @@ export default function InscriptionsPage() {
                   size="sm"
                   onClick={() => setSelectedCours('all')}
                 >
-                  Réinitialiser
+                  <span className="sr-only">Réinitialiser cours</span>
+                  ×
+                </Button>
+              )}
+            </div>
+
+            {/* Filtre par étudiant */}
+            <div className="flex items-center gap-2">
+              <Filter className="h-4 w-4 text-muted-foreground" />
+              <Select value={selectedEtudiant} onValueChange={setSelectedEtudiant}>
+                <SelectTrigger className="w-[250px]">
+                  <SelectValue placeholder="Filtrer par étudiant" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tous les étudiants</SelectItem>
+                  {etudiants?.map(e => (
+                    <SelectItem key={e.id} value={e.id}>
+                      {e.fields.Prénom} {e.fields.Nom}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {selectedEtudiant !== 'all' && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSelectedEtudiant('all')}
+                >
+                  <span className="sr-only">Réinitialiser étudiant</span>
+                  ×
                 </Button>
               )}
             </div>
@@ -381,8 +432,8 @@ export default function InscriptionsPage() {
         <CardContent>
           {!sortedInscriptions || sortedInscriptions.length === 0 ? (
             <p className="text-center py-8 text-muted-foreground">
-              {searchTerm
-                ? 'Aucune inscription trouvée pour cette recherche'
+              {searchTerm || selectedCours !== 'all' || selectedEtudiant !== 'all'
+                ? 'Aucune inscription trouvée avec ces filtres'
                 : 'Aucune inscription créée. Cliquez sur "Nouvelle Inscription" pour commencer.'}
             </p>
           ) : (

@@ -21,7 +21,9 @@ import {
 } from '@/components/ui/table';
 import { Users, Mail, Phone, Plus, Edit, Trash2, Search } from 'lucide-react';
 import { EtudiantFormDialog } from '@/components/custom/EtudiantFormDialog';
+import { Progress } from '@/components/ui/progress';
 import { toast } from 'sonner';
+import Link from 'next/link';
 
 interface Etudiant {
   id: string;
@@ -32,6 +34,10 @@ interface Etudiant {
     Téléphone?: string;
     Adresse?: string;
     Notes?: string;
+    'Taux de présence'?: number;
+    "Nb inscriptions"?: number;
+    'Nb présences'?: number;
+    'Nb sessions totales'?: number;
   };
 }
 
@@ -210,51 +216,90 @@ export default function EtudiantsPage() {
                   <TableHead>Nom</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Téléphone</TableHead>
-                  <TableHead>Adresse</TableHead>
+                  <TableHead>Inscriptions</TableHead>
+                  <TableHead>Sessions</TableHead>
+                  <TableHead>Taux de présence</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredEtudiants.map(etudiant => (
-                  <TableRow key={etudiant.id}>
-                    <TableCell className="font-medium">
-                      {etudiant.fields.Prénom} {etudiant.fields.Nom}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Mail className="h-3 w-3 text-muted-foreground" />
-                        {etudiant.fields.Email || '-'}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Phone className="h-3 w-3 text-muted-foreground" />
-                        {etudiant.fields.Téléphone || '-'}
-                      </div>
-                    </TableCell>
-                    <TableCell className="max-w-xs truncate">
-                      {etudiant.fields.Adresse || '-'}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleEdit(etudiant)}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDelete(etudiant.id)}
-                        >
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {filteredEtudiants.map(etudiant => {
+                  const tauxPresence = etudiant.fields['Taux de présence'] || 0;
+                  const tauxPercent = Math.round(tauxPresence * 100);
+                  const nbInscriptions = etudiant.fields["Nb inscriptions"] || 0;
+                  const nbPresences = etudiant.fields['Nb présences'] || 0;
+                  const nbSessionsTotales = etudiant.fields['Nb sessions totales'] || 0;
+
+                  return (
+                    <TableRow key={etudiant.id}>
+                      <TableCell className="font-medium">
+                        {etudiant.fields.Prénom} {etudiant.fields.Nom}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Mail className="h-3 w-3 text-muted-foreground" />
+                          <span className="text-sm">{etudiant.fields.Email || '-'}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Phone className="h-3 w-3 text-muted-foreground" />
+                          <span className="text-sm">{etudiant.fields.Téléphone || '-'}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {nbInscriptions === 0 ? (
+                          <Badge variant="secondary">
+                            0
+                          </Badge>
+                        ) : (
+                          <Link 
+                            href={`/inscriptions?etudiant=${encodeURIComponent(etudiant.fields.Prénom + ' ' + etudiant.fields.Nom)}`}
+                            className="inline-block"
+                          >
+                            <Badge 
+                              variant="secondary" 
+                              className="cursor-pointer hover:bg-secondary/80 transition-colors"
+                            >
+                              {nbInscriptions}
+                            </Badge>
+                          </Link>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-sm font-medium">
+                          {nbPresences} / {nbSessionsTotales}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <div className="space-y-1 min-w-[120px]">
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="font-medium">{tauxPercent}%</span>
+                          </div>
+                          <Progress value={tauxPercent} className="h-2" />
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEdit(etudiant)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDelete(etudiant.id)}
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           )}

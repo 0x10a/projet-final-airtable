@@ -47,6 +47,10 @@ export interface EtudiantFields extends BaseFields {
   Téléphone?: string;
   Adresse?: string;
   Notes?: string;
+  'Taux de présence'?: number; // Pourcentage (0-1)
+  "Nb inscriptions"?: number;
+  'Nb présences'?: number;
+  'Nb sessions totales'?: number;
 }
 
 // Table Cours
