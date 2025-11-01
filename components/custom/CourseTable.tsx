@@ -11,7 +11,7 @@ import { DataTable } from '@/components/data-table';
 import { AirtableRecord, CoursFields } from '@/lib/airtable';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Eye, Edit, Trash2 } from 'lucide-react';
+import { Eye, Edit, Trash2, Calendar } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { formatDateShort } from '@/lib/date-utils';
 import { toast } from 'sonner';
@@ -128,6 +128,7 @@ export function CourseTable({ courses, onEdit, onRefetch }: CourseTableProps) {
       header: 'Actions',
       cell: ({ row }) => {
         const courseId = row.original.id;
+        const coursName = row.original.fields['Nom du cours'];
         
         return (
           <div className="flex gap-2">
@@ -141,14 +142,27 @@ export function CourseTable({ courses, onEdit, onRefetch }: CourseTableProps) {
                 }
                 router.push(`/cours/${courseId}`);
               }}
+              title="Voir le détail"
             >
               <Eye className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                // Rediriger vers la page Sessions avec le filtre pré-sélectionné
+                router.push(`/sessions?cours=${encodeURIComponent(coursName)}`);
+              }}
+              title="Voir toutes les sessions"
+            >
+              <Calendar className="h-4 w-4 text-blue-600" />
             </Button>
             {onEdit && (
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => onEdit(row.original)}
+                title="Modifier"
               >
                 <Edit className="h-4 w-4" />
               </Button>
@@ -157,6 +171,7 @@ export function CourseTable({ courses, onEdit, onRefetch }: CourseTableProps) {
               variant="ghost"
               size="sm"
               onClick={() => handleDelete(courseId)}
+              title="Supprimer"
             >
               <Trash2 className="h-4 w-4 text-destructive" />
             </Button>

@@ -5,8 +5,9 @@
 
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Calendar, BookOpen, Trash2, X, ArrowUpDown } from 'lucide-react';
@@ -47,6 +48,9 @@ interface Cours {
 }
 
 export default function SessionsPage() {
+  const searchParams = useSearchParams();
+  const coursParam = searchParams.get('cours'); // Récupérer le paramètre cours de l'URL
+  
   const [selectedCours, setSelectedCours] = useState<string>('all');
   const [sortBy, setSortBy] = useState<'nom' | 'date'>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
@@ -111,6 +115,16 @@ export default function SessionsPage() {
       name: c.fields['Nom du cours'],
     }));
   }, [cours]);
+
+  // Initialiser le filtre si un cours est passé en paramètre URL
+  useEffect(() => {
+    if (coursParam && cours) {
+      const coursFound = cours.find(c => c.fields['Nom du cours'] === coursParam);
+      if (coursFound) {
+        setSelectedCours(coursFound.id);
+      }
+    }
+  }, [coursParam, cours]);
 
   // Filtrer et trier les sessions
   const filteredAndSortedSessions = useMemo(() => {
