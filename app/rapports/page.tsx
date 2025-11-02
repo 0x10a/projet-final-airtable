@@ -349,7 +349,7 @@ export default function RapportsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <FileText className="h-5 w-5" />
-              Feuille d'Émargement
+              Feuille d'émargement
             </CardTitle>
             <CardDescription>
               Export par session avec signatures et horodatages

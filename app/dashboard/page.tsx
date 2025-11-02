@@ -31,6 +31,7 @@ interface Cours {
   fields: {
     'Nom du cours': string;
     Sessions?: string[];
+    Formateur?: string;
   };
 }
 
@@ -49,7 +50,7 @@ interface Presence {
   fields: {
     Session?: string[];
     Étudiant?: string[];
-    'Présent ?'?: boolean;
+    'Présent ?'?: boolean | 'Absent' | string;
     Horodatage?: string;
   };
 }
@@ -126,9 +127,10 @@ export default function DashboardPage() {
       return parsedDate && isFuture(parsedDate);
     }).length || 0;
     
-    const totalPresences = presences?.length || 0;
-    const presentsCount = presences?.filter(p => p.fields['Présent ?']).length || 0;
-    const tauxPresence = totalPresences > 0 ? (presentsCount / totalPresences) * 100 : 0;
+    // Inscriptions pour cours non terminés
+    const inscriptionsCoursNonTermines = inscriptions?.filter(i => 
+      i.fields.Statut !== 'Terminé' && i.fields.Statut !== 'Annulé'
+    ).length || 0;
 
     // Inscriptions ce mois
     const startMonth = startOfMonth(new Date());
@@ -138,37 +140,25 @@ export default function DashboardPage() {
       return parsedDate && parsedDate >= startMonth;
     }).length || 0;
 
-    // Sessions sans émargement
-    const sessionsSansEmargement = sessions?.filter(s => {
-      const date = s.fields['Date de la session'];
-      const parsedDate = parseAirtableDate(date);
-      const isPast = parsedDate && !isFuture(parsedDate);
-      const hasPresences = (s.fields.Présences?.length || 0) > 0;
-      return isPast && !hasPresences;
-    }).length || 0;
+    // Absences (présences marquées comme "Absent")
+    const absences = presences?.filter(p => p.fields['Présent ?'] === 'Absent').length || 0;
 
-    // Étudiants actifs (avec au moins une présence dans les 30 derniers jours)
-    const date30DaysAgo = subDays(new Date(), 30);
-    const etudiantsActifsIds = new Set(
-      presences
-        ?.filter(p => {
-          const horodatage = p.fields.Horodatage;
-          const parsedDate = parseAirtableDate(horodatage);
-          return parsedDate && parsedDate >= date30DaysAgo;
-        })
-        .map(p => p.fields.Étudiant?.[0])
+    // Formateurs uniques
+    const formateursSet = new Set(
+      cours
+        ?.map(c => c.fields.Formateur)
         .filter(Boolean) || []
     );
-    const etudiantsActifs = etudiantsActifsIds.size;
+    const formateurs = formateursSet.size;
 
     return {
       totalEtudiants,
       totalCours,
       sessionsAVenir,
-      tauxPresence,
+      inscriptionsCoursNonTermines,
       inscriptionsCeMois,
-      sessionsSansEmargement,
-      etudiantsActifs,
+      absences,
+      formateurs,
     };
   }, [etudiants, cours, sessions, presences, inscriptions]);
 
@@ -254,7 +244,7 @@ export default function DashboardPage() {
     <div className="container mx-auto py-10 space-y-8">
       {/* En-tête */}
       <div>
-        <h1 className="text-4xl font-bold">Dashboard Design.academy</h1>
+        <h1 className="text-4xl font-bold">Dashboard</h1>
         <p className="text-muted-foreground mt-2">
           Vue d'ensemble de votre centre de formation
         </p>
@@ -265,7 +255,7 @@ export default function DashboardPage() {
         totalEtudiants={stats.totalEtudiants}
         totalCours={stats.totalCours}
         sessionsAVenir={stats.sessionsAVenir}
-        tauxPresence={stats.tauxPresence}
+        inscriptionsCoursNonTermines={stats.inscriptionsCoursNonTermines}
       />
 
       {/* Nouvelles métriques */}
@@ -285,26 +275,26 @@ export default function DashboardPage() {
         
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Étudiants actifs</CardTitle>
+            <CardTitle className="text-sm font-medium">Formateurs</CardTitle>
             <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.etudiantsActifs}</div>
+            <div className="text-2xl font-bold">{stats.formateurs}</div>
             <p className="text-xs text-muted-foreground">
-              Présents dans les 30 derniers jours
+              Formateurs uniques
             </p>
           </CardContent>
         </Card>
         
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Sessions sans émargement</CardTitle>
+            <CardTitle className="text-sm font-medium">Absences</CardTitle>
             <AlertTriangle className="h-4 w-4 text-destructive" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-destructive">{stats.sessionsSansEmargement}</div>
+            <div className="text-2xl font-bold text-destructive">{stats.absences}</div>
             <p className="text-xs text-muted-foreground">
-              Sessions passées non émargées
+              Étudiants marqués absents
             </p>
           </CardContent>
         </Card>

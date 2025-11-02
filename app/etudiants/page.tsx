@@ -124,7 +124,7 @@ export default function EtudiantsPage() {
       {/* En-tête */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-4xl font-bold">Gestion des Étudiants</h1>
+          <h1 className="text-4xl font-bold">Étudiants</h1>
           <p className="text-muted-foreground mt-2">
             Créer, modifier et supprimer des étudiants
           </p>

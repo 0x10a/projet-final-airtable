@@ -292,7 +292,7 @@ export default function PresencesPage() {
       {/* En-tête */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-4xl font-bold">Historique des Présences</h1>
+          <h1 className="text-4xl font-bold">Feuilles de présences</h1>
           <p className="text-muted-foreground mt-2">
             Visualisez tous les émargements avec filtres avancés
           </p>

@@ -204,13 +204,42 @@ export default function InscriptionsPage() {
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="container mx-auto py-10">
-        <p>Chargement des inscriptions...</p>
-      </div>
-    );
-  }
+  // Données pour la courbe d'évolution des 30 derniers jours
+  const chartData = useMemo(() => {
+    if (!inscriptions) return [];
+
+    const today = new Date();
+    const thirtyDaysAgo = new Date(today);
+    thirtyDaysAgo.setDate(today.getDate() - 30);
+
+    // Créer un objet pour compter les inscriptions par jour
+    const dailyCounts: Record<string, number> = {};
+
+    // Initialiser tous les jours avec 0
+    for (let i = 0; i <= 30; i++) {
+      const date = new Date(thirtyDaysAgo);
+      date.setDate(thirtyDaysAgo.getDate() + i);
+      const dateStr = date.toISOString().split('T')[0];
+      dailyCounts[dateStr] = 0;
+    }
+
+    // Compter les inscriptions par jour
+    inscriptions.forEach(inscription => {
+      const dateInscription = parseAirtableDate(inscription.fields["Date d'inscription"]);
+      if (dateInscription && dateInscription >= thirtyDaysAgo && dateInscription <= today) {
+        const dateStr = dateInscription.toISOString().split('T')[0];
+        if (dailyCounts[dateStr] !== undefined) {
+          dailyCounts[dateStr]++;
+        }
+      }
+    });
+
+    // Convertir en tableau pour le graphique
+    return Object.entries(dailyCounts).map(([date, count]) => ({
+      date: new Date(date).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }),
+      inscriptions: count,
+    }));
+  }, [inscriptions]);
 
   // Filtrer et trier les inscriptions
   const filteredInscriptions = inscriptions?.filter(inscription => {
@@ -270,49 +299,20 @@ export default function InscriptionsPage() {
     annule: inscriptions?.filter(i => i.fields.Statut === 'Annulé').length || 0,
   };
 
-  // Données pour la courbe d'évolution des 30 derniers jours
-  const chartData = useMemo(() => {
-    if (!inscriptions) return [];
-
-    const today = new Date();
-    const thirtyDaysAgo = new Date(today);
-    thirtyDaysAgo.setDate(today.getDate() - 30);
-
-    // Créer un objet pour compter les inscriptions par jour
-    const dailyCounts: Record<string, number> = {};
-
-    // Initialiser tous les jours avec 0
-    for (let i = 0; i <= 30; i++) {
-      const date = new Date(thirtyDaysAgo);
-      date.setDate(thirtyDaysAgo.getDate() + i);
-      const dateStr = date.toISOString().split('T')[0];
-      dailyCounts[dateStr] = 0;
-    }
-
-    // Compter les inscriptions par jour
-    inscriptions.forEach(inscription => {
-      const dateInscription = parseAirtableDate(inscription.fields["Date d'inscription"]);
-      if (dateInscription && dateInscription >= thirtyDaysAgo && dateInscription <= today) {
-        const dateStr = dateInscription.toISOString().split('T')[0];
-        if (dailyCounts[dateStr] !== undefined) {
-          dailyCounts[dateStr]++;
-        }
-      }
-    });
-
-    // Convertir en tableau pour le graphique
-    return Object.entries(dailyCounts).map(([date, count]) => ({
-      date: new Date(date).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }),
-      inscriptions: count,
-    }));
-  }, [inscriptions]);
+  if (isLoading) {
+    return (
+      <div className="container mx-auto py-10">
+        <p>Chargement des inscriptions...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto py-10 space-y-8">
       {/* En-tête */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-4xl font-bold">Gestion des Inscriptions</h1>
+          <h1 className="text-4xl font-bold">Inscriptions</h1>
           <p className="text-muted-foreground mt-2">
             Associer les étudiants aux cours et gérer leurs inscriptions
           </p>

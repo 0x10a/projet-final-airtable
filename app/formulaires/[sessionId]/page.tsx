@@ -71,7 +71,7 @@ export default async function EmargementPage({ params }: EmargementPageProps) {
       <div className="container mx-auto max-w-2xl px-4">
         {/* En-tête */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold mb-2">Feuille d'Émargement</h1>
+          <h1 className="text-3xl font-bold mb-2">Feuille d'émargement</h1>
           <p className="text-muted-foreground">
             Confirmez votre présence pour cette session de formation
           </p>

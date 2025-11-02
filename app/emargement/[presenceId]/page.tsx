@@ -12,6 +12,8 @@ import { Calendar, BookOpen, User } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { parseAirtableDate } from '@/lib/date-utils';
+import Image from 'next/image';
+import Link from 'next/link';
 
 interface EmargementPageProps {
   params: Promise<{
@@ -72,15 +74,33 @@ export default async function EmargementPage({ params }: EmargementPageProps) {
   const isAlreadySigned = presence.fields.Signature === true;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-zinc-50 to-zinc-100 dark:from-zinc-900 dark:to-black py-12">
-      <div className="container mx-auto max-w-2xl px-4">
-        {/* En-tête */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold mb-2">Feuille d'Émargement</h1>
-          <p className="text-muted-foreground">
-            Confirmez votre présence pour cette session de formation
-          </p>
+    <>
+      {/* Logo centré en haut */}
+      <header className="py-6 border-b bg-white dark:bg-zinc-950">
+        <div className="container mx-auto flex justify-center">
+          <Link href="/">
+            <Image 
+              src="/logo.png?v=2"
+              alt="Design.academy" 
+              width={200} 
+              height={50}
+              className="h-10 w-auto"
+              priority
+              unoptimized
+            />
+          </Link>
         </div>
+      </header>
+
+      <div className="min-h-screen bg-gradient-to-b from-zinc-50 to-zinc-100 dark:from-zinc-900 dark:to-black py-12">
+        <div className="container mx-auto max-w-2xl px-4">
+          {/* En-tête */}
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold mb-2">Feuille d'émargement</h1>
+            <p className="text-muted-foreground">
+              Confirmez votre présence pour cette session de formation
+            </p>
+          </div>
 
         {/* Informations de l'étudiant */}
         <Card className="mb-6 border-primary/20">
@@ -168,5 +188,6 @@ export default async function EmargementPage({ params }: EmargementPageProps) {
         </div>
       </div>
     </div>
+    </>
   );
 }

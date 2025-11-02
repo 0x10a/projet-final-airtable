@@ -206,27 +206,36 @@ export default async function CourseDetailPage({ params }: CourseDetailPageProps
                 <TableRow>
                   <TableHead>Nom de la session</TableHead>
                   <TableHead>Date</TableHead>
-                  <TableHead>Action</TableHead>
+                  <TableHead>Cours</TableHead>
+                  <TableHead>Statut</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {sessions.map(session => (
-                  <TableRow key={session.id}>
-                    <TableCell className="font-medium">
-                      {session.fields['Nom de la session']}
-                    </TableCell>
-                    <TableCell>
-                      {formatDateShort(session.fields['Date de la session'])}
-                    </TableCell>
-                    <TableCell>
-                      <Link href={`/formulaires/${session.id}`}>
-                        <Button variant="outline" size="sm">
-                          Feuille d'émargement
-                        </Button>
-                      </Link>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {sessions.map(session => {
+                  const sessionDate = session.fields['Date de la session'] 
+                    ? new Date(session.fields['Date de la session']) 
+                    : null;
+                  const isUpcoming = sessionDate && sessionDate > new Date();
+                  
+                  return (
+                    <TableRow key={session.id}>
+                      <TableCell className="font-medium">
+                        {session.fields['Nom de la session']}
+                      </TableCell>
+                      <TableCell>
+                        {formatDateShort(session.fields['Date de la session'])}
+                      </TableCell>
+                      <TableCell>
+                        {course.fields['Nom du cours']}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={isUpcoming ? 'default' : 'secondary'}>
+                          {isUpcoming ? 'À venir' : 'Passée'}
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           )}

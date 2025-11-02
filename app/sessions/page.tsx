@@ -167,7 +167,7 @@ export default function SessionsPage() {
     <div className="container mx-auto py-10 space-y-8">
       {/* En-tête */}
       <div>
-        <h1 className="text-4xl font-bold">Gestion des Sessions</h1>
+        <h1 className="text-4xl font-bold">Sessions</h1>
         <p className="text-muted-foreground mt-2">
           Les sessions sont créées automatiquement depuis Airtable
         </p>

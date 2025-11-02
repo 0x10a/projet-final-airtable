@@ -132,7 +132,7 @@ export default function CoursPage() {
       {/* En-tête */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-4xl font-bold">Gestion des Cours</h1>
+          <h1 className="text-4xl font-bold">Cours</h1>
           <p className="text-muted-foreground mt-2">
             Créer, modifier et supprimer des cours
           </p>
