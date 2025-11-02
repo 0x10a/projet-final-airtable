@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { GraduationCap, LayoutDashboard, BookOpen, Calendar, FileText, Users, CheckSquare, BarChart3 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import Image from 'next/image';
 
 const navItems = [
   {
@@ -60,9 +61,16 @@ export function Navbar() {
       <div className="w-full px-4">
         <div className="container mx-auto flex h-16 items-center">
           {/* Logo */}
-          <Link href="/" className="flex items-center space-x-2 mr-8">
-            <GraduationCap className="h-6 w-6 text-primary" />
-            <span className="font-bold text-xl">Design.academy</span>
+          <Link href="/" className="mr-8">
+            <Image 
+              src="/logo.png?v=2"
+              alt="Design.academy" 
+              width={200} 
+              height={50}
+              className="h-10 w-auto"
+              priority
+              unoptimized
+            />
           </Link>
 
           {/* Navigation */}

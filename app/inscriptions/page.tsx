@@ -5,7 +5,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -18,7 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Plus, UserPlus, Edit, Trash2, Search, Filter, ArrowUpDown } from 'lucide-react';
+import { Plus, UserPlus, Edit, Trash2, Search, Filter, ArrowUpDown, TrendingUp } from 'lucide-react';
 import { InscriptionFormDialog } from '@/components/custom/InscriptionFormDialog';
 import { formatDateShort, parseAirtableDate } from '@/lib/date-utils';
 import {
@@ -31,6 +31,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 interface Inscription {
   id: string;
@@ -269,6 +270,43 @@ export default function InscriptionsPage() {
     annule: inscriptions?.filter(i => i.fields.Statut === 'Annulé').length || 0,
   };
 
+  // Données pour la courbe d'évolution des 30 derniers jours
+  const chartData = useMemo(() => {
+    if (!inscriptions) return [];
+
+    const today = new Date();
+    const thirtyDaysAgo = new Date(today);
+    thirtyDaysAgo.setDate(today.getDate() - 30);
+
+    // Créer un objet pour compter les inscriptions par jour
+    const dailyCounts: Record<string, number> = {};
+
+    // Initialiser tous les jours avec 0
+    for (let i = 0; i <= 30; i++) {
+      const date = new Date(thirtyDaysAgo);
+      date.setDate(thirtyDaysAgo.getDate() + i);
+      const dateStr = date.toISOString().split('T')[0];
+      dailyCounts[dateStr] = 0;
+    }
+
+    // Compter les inscriptions par jour
+    inscriptions.forEach(inscription => {
+      const dateInscription = parseAirtableDate(inscription.fields["Date d'inscription"]);
+      if (dateInscription && dateInscription >= thirtyDaysAgo && dateInscription <= today) {
+        const dateStr = dateInscription.toISOString().split('T')[0];
+        if (dailyCounts[dateStr] !== undefined) {
+          dailyCounts[dateStr]++;
+        }
+      }
+    });
+
+    // Convertir en tableau pour le graphique
+    return Object.entries(dailyCounts).map(([date, count]) => ({
+      date: new Date(date).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }),
+      inscriptions: count,
+    }));
+  }, [inscriptions]);
+
   return (
     <div className="container mx-auto py-10 space-y-8">
       {/* En-tête */}
@@ -284,6 +322,64 @@ export default function InscriptionsPage() {
           Nouvelle Inscription
         </Button>
       </div>
+
+      {/* Courbe d'évolution des inscriptions */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <TrendingUp className="h-5 w-5" />
+            Évolution des inscriptions (30 derniers jours)
+          </CardTitle>
+          <CardDescription>
+            {chartData.reduce((sum, day) => sum + day.inscriptions, 0)} inscription(s) au total
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {chartData.length === 0 ? (
+            <p className="text-center py-8 text-muted-foreground">
+              Aucune donnée disponible pour afficher le graphique
+            </p>
+          ) : (
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart 
+                data={chartData}
+                margin={{ top: 5, right: 20, left: 10, bottom: 5 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                <XAxis 
+                  dataKey="date" 
+                  tick={{ fontSize: 11 }}
+                  stroke="#6b7280"
+                />
+                <YAxis 
+                  allowDecimals={false}
+                  tick={{ fontSize: 11 }}
+                  stroke="#6b7280"
+                />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: '#ffffff',
+                    border: '1px solid #e5e7eb',
+                    borderRadius: '8px',
+                    padding: '8px 12px'
+                  }}
+                  labelStyle={{ fontWeight: 'bold', marginBottom: '4px' }}
+                />
+                <Line 
+                  type="linear" 
+                  dataKey="inscriptions" 
+                  stroke="#2563eb" 
+                  strokeWidth={3}
+                  dot={{ fill: '#2563eb', r: 4 }}
+                  activeDot={{ r: 6, fill: '#2563eb' }}
+                  name="Inscriptions"
+                  isAnimationActive={true}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Barre de recherche */}
       <Card>
