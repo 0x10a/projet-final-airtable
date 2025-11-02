@@ -55,8 +55,7 @@ export function AttendanceForm({ presenceId, etudiant, isAlreadySigned }: Attend
   async function onSubmit(values: SignatureFormData) {
     setIsSubmitting(true);
     try {
-      // Mettre à jour uniquement le statut et l'horodatage
-      // (pas de stockage de la signature pour l'instant)
+      // Mettre à jour la checkbox Signature et l'horodatage
       const response = await fetch('/api/airtable', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -64,7 +63,7 @@ export function AttendanceForm({ presenceId, etudiant, isAlreadySigned }: Attend
           tableName: 'Présences',
           recordId: presenceId,
           fields: {
-            'Présent ?': 'Oui', // Mettre à jour le statut
+            Signature: true, // Cocher la checkbox de signature
             Horodatage: new Date().toISOString(),
           },
         }),

@@ -68,14 +68,8 @@ export default async function EmargementPage({ params }: EmargementPageProps) {
       )
     : null;
 
-  // Vérifier si déjà signé
-  const presentValue: any = presence.fields['Présent ?'];
-  const isAlreadySigned = 
-    (typeof presentValue === 'string' && 
-     (presentValue.toLowerCase() === 'oui' || 
-      presentValue.toLowerCase() === 'présent' ||
-      presentValue.toLowerCase() === 'present')) ||
-    (typeof presentValue === 'boolean' && presentValue === true);
+  // Vérifier si déjà signé (checkbox Signature cochée)
+  const isAlreadySigned = presence.fields.Signature === true;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-zinc-50 to-zinc-100 dark:from-zinc-900 dark:to-black py-12">

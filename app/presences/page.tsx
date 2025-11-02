@@ -37,7 +37,7 @@ interface Presence {
     Session?: string[];
     Étudiant?: string[];
     'Présent ?'?: boolean;
-    Signature?: string;
+    Signature?: boolean;
     Horodatage?: string;
     'Date de la session (from Sessions)'?: string;
   };
@@ -479,40 +479,12 @@ export default function PresencesPage() {
                             );
                           })()}
                         </TableCell>
-                        <TableCell>
-                          {(() => {
-                            const sig = presence.fields.Signature;
-                            if (!sig) return '-';
-                            
-                            // Si c'est un array (Attachment), prendre la première URL
-                            if (Array.isArray(sig) && sig.length > 0) {
-                              return (
-                                <img 
-                                  src={sig[0].url} 
-                                  alt="Signature" 
-                                  className="h-12 w-auto border rounded"
-                                />
-                              );
-                            }
-                            
-                            // Si c'est une string base64
-                            if (typeof sig === 'string' && sig.startsWith('data:image')) {
-                              return (
-                                <img 
-                                  src={sig} 
-                                  alt="Signature" 
-                                  className="h-12 w-auto border rounded"
-                                />
-                              );
-                            }
-                            
-                            // Sinon afficher le texte
-                            return (
-                              <span className="text-sm truncate max-w-[100px] block">
-                                {typeof sig === 'string' ? sig : '-'}
-                              </span>
-                            );
-                          })()}
+                        <TableCell className="text-center">
+                          {presence.fields.Signature ? (
+                            <CheckCircle2 className="h-5 w-5 text-green-600 inline-block" />
+                          ) : (
+                            <span className="text-muted-foreground"> </span>
+                          )}
                         </TableCell>
                         <TableCell className="text-sm text-muted-foreground">
                           {formatDateTime(presence.fields.Horodatage)}
@@ -528,7 +500,7 @@ export default function PresencesPage() {
                               target="_blank"
                               rel="noopener noreferrer"
                             >
-                              Ouvrir
+                              Feuille d'émargement
                             </a>
                           </Button>
                         </TableCell>

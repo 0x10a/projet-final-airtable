@@ -90,7 +90,7 @@ export interface PresenceFields extends BaseFields {
   Session?: string[]; // Linked record ID
   Étudiant?: string[]; // Linked record ID
   'Présent ?'?: boolean | string; // Peut être boolean ou string ("Oui", "À saisir")
-  Signature?: string | Array<{ url: string; filename?: string }>; // Long Text (base64) ou Attachment field
+  Signature?: boolean; // Checkbox
   Horodatage?: string;
   'Date de la session (from Sessions)'?: string; // Lookup field
 }
