@@ -15,6 +15,7 @@ import { Eye, Edit, Trash2, Calendar } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { formatDateShort } from '@/lib/date-utils';
 import { toast } from 'sonner';
+import Link from 'next/link';
 
 interface CourseTableProps {
   courses: AirtableRecord<CoursFields>[];
@@ -120,6 +121,30 @@ export function CourseTable({ courses, onEdit, onRefetch }: CourseTableProps) {
           <Badge variant="outline" className={colors[modalite] || ''}>
             {modalite}
           </Badge>
+        );
+      },
+    },
+    {
+      accessorKey: 'fields.Nb inscriptions',
+      header: 'Étudiants inscrits',
+      cell: ({ row }) => {
+        const nbInscriptions = row.original.fields['Nb inscriptions'] || 0;
+        const coursName = row.original.fields['Nom du cours'];
+        
+        if (nbInscriptions === 0) {
+          return (
+            <Badge variant="secondary">
+              0
+            </Badge>
+          );
+        }
+        
+        return (
+          <Link href={`/inscriptions?cours=${encodeURIComponent(coursName)}`}>
+            <Badge variant="secondary" className="cursor-pointer hover:bg-secondary/80 transition-colors">
+              {nbInscriptions}
+            </Badge>
+          </Link>
         );
       },
     },

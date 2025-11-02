@@ -54,12 +54,14 @@ interface Cours {
   id: string;
   fields: {
     'Nom du cours': string;
+    'Date de début'?: string;
   };
 }
 
 export default function InscriptionsPage() {
   const searchParams = useSearchParams();
   const etudiantParam = searchParams.get('etudiant'); // Récupérer le paramètre étudiant de l'URL
+  const coursParam = searchParams.get('cours'); // Récupérer le paramètre cours de l'URL
   
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingInscription, setEditingInscription] = useState<Inscription | null>(null);
@@ -157,6 +159,12 @@ export default function InscriptionsPage() {
     return c?.fields['Nom du cours'] || 'Cours inconnu';
   };
 
+  // Trouver la date de début d'un cours par son ID
+  const getCoursDateDebut = (coursId: string) => {
+    const c = cours?.find(c => c.id === coursId);
+    return c?.fields['Date de début'];
+  };
+
   // Initialiser le filtre si un étudiant est passé en paramètre URL
   useEffect(() => {
     if (etudiantParam && etudiants) {
@@ -168,6 +176,18 @@ export default function InscriptionsPage() {
       }
     }
   }, [etudiantParam, etudiants]);
+
+  // Initialiser le filtre si un cours est passé en paramètre URL
+  useEffect(() => {
+    if (coursParam && cours) {
+      const coursFound = cours.find(c => 
+        c.fields['Nom du cours'] === coursParam
+      );
+      if (coursFound) {
+        setSelectedCours(coursFound.id);
+      }
+    }
+  }, [coursParam, cours]);
 
   // Obtenir la couleur du badge selon le statut
   const getStatutBadgeVariant = (statut?: string) => {
@@ -265,50 +285,14 @@ export default function InscriptionsPage() {
         </Button>
       </div>
 
-      {/* Statistiques */}
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Total Inscriptions</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{inscriptions?.length || 0}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Inscrits</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-blue-600">{statsParStatut.inscrit}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Terminés</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-green-600">{statsParStatut.termine}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Annulés</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-red-600">{statsParStatut.annule}</div>
-          </CardContent>
-        </Card>
-      </div>
-
       {/* Barre de recherche */}
       <Card>
-        <CardHeader>
-          <CardTitle>Rechercher</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center gap-2">
-            <Search className="h-4 w-4 text-muted-foreground" />
+        <CardContent className="p-6">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <Search className="h-5 w-5" />
+              <span className="font-semibold whitespace-nowrap">Rechercher</span>
+            </div>
             <Input
               placeholder="Rechercher par étudiant, cours ou statut..."
               value={searchTerm}
@@ -330,17 +314,20 @@ export default function InscriptionsPage() {
 
       {/* Filtres et Tri */}
       <Card>
-        <CardHeader>
-          <CardTitle>Filtres et Tri</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap gap-4 items-center">
+        <CardContent className="p-6">
+          <div className="flex flex-wrap items-center gap-6">
+            {/* Titre */}
+            <div className="flex items-center gap-2">
+              <Filter className="h-5 w-5" />
+              <span className="font-semibold">Filtres et Tri</span>
+            </div>
+
             {/* Filtre par cours */}
             <div className="flex items-center gap-2">
-              <Filter className="h-4 w-4 text-muted-foreground" />
+              <label className="text-sm font-medium whitespace-nowrap">Cours</label>
               <Select value={selectedCours} onValueChange={setSelectedCours}>
-                <SelectTrigger className="w-[250px]">
-                  <SelectValue placeholder="Filtrer par cours" />
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue placeholder="Tous les cours" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Tous les cours</SelectItem>
@@ -351,24 +338,14 @@ export default function InscriptionsPage() {
                   ))}
                 </SelectContent>
               </Select>
-              {selectedCours !== 'all' && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setSelectedCours('all')}
-                >
-                  <span className="sr-only">Réinitialiser cours</span>
-                  ×
-                </Button>
-              )}
             </div>
 
             {/* Filtre par étudiant */}
             <div className="flex items-center gap-2">
-              <Filter className="h-4 w-4 text-muted-foreground" />
+              <label className="text-sm font-medium whitespace-nowrap">Étudiant</label>
               <Select value={selectedEtudiant} onValueChange={setSelectedEtudiant}>
-                <SelectTrigger className="w-[250px]">
-                  <SelectValue placeholder="Filtrer par étudiant" />
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue placeholder="Tous les étudiants" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Tous les étudiants</SelectItem>
@@ -379,28 +356,19 @@ export default function InscriptionsPage() {
                   ))}
                 </SelectContent>
               </Select>
-              {selectedEtudiant !== 'all' && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setSelectedEtudiant('all')}
-                >
-                  <span className="sr-only">Réinitialiser étudiant</span>
-                  ×
-                </Button>
-              )}
             </div>
 
             {/* Tri */}
             <div className="flex items-center gap-2">
+              <label className="text-sm font-medium whitespace-nowrap">Trier par</label>
               <Select value={sortBy} onValueChange={(v) => setSortBy(v as 'date' | 'etudiant' | 'statut')}>
-                <SelectTrigger className="w-[180px]">
+                <SelectTrigger className="w-[150px]">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="date">Trier par date</SelectItem>
-                  <SelectItem value="etudiant">Trier par étudiant</SelectItem>
-                  <SelectItem value="statut">Trier par statut</SelectItem>
+                  <SelectItem value="date">Date</SelectItem>
+                  <SelectItem value="etudiant">Étudiant</SelectItem>
+                  <SelectItem value="statut">Statut</SelectItem>
                 </SelectContent>
               </Select>
               <Button
@@ -411,11 +379,6 @@ export default function InscriptionsPage() {
                 <ArrowUpDown className="h-4 w-4 mr-1" />
                 {sortOrder === 'asc' ? 'Croissant' : 'Décroissant'}
               </Button>
-            </div>
-
-            {/* Résultats */}
-            <div className="text-sm text-muted-foreground ml-auto">
-              {sortedInscriptions.length} inscription(s) affichée(s)
             </div>
           </div>
         </CardContent>
@@ -442,6 +405,7 @@ export default function InscriptionsPage() {
                 <TableRow>
                   <TableHead>Étudiant</TableHead>
                   <TableHead>Cours</TableHead>
+                  <TableHead>Date de début</TableHead>
                   <TableHead>Date d'inscription</TableHead>
                   <TableHead>Statut</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
@@ -452,6 +416,7 @@ export default function InscriptionsPage() {
                   const etudiantId = inscription.fields.Étudiant?.[0];
                   const coursId = inscription.fields.Cours?.[0];
                   const dateInscription = inscription.fields["Date d'inscription"];
+                  const dateDebut = coursId ? getCoursDateDebut(coursId) : undefined;
 
                   return (
                     <TableRow key={inscription.id}>
@@ -463,6 +428,9 @@ export default function InscriptionsPage() {
                       </TableCell>
                       <TableCell>
                         {coursId ? getCoursName(coursId) : '-'}
+                      </TableCell>
+                      <TableCell>
+                        {formatDateShort(dateDebut)}
                       </TableCell>
                       <TableCell>
                         {formatDateShort(dateInscription)}

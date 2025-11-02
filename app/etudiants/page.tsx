@@ -135,60 +135,19 @@ export default function EtudiantsPage() {
         </Button>
       </div>
 
-      {/* Statistiques */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Users className="h-5 w-5" />
-              Total Étudiants
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{etudiants?.length || 0}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Mail className="h-5 w-5" />
-              Avec Email
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">
-              {etudiants?.filter(e => e.fields.Email).length || 0}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Phone className="h-5 w-5" />
-              Avec Téléphone
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">
-              {etudiants?.filter(e => e.fields.Téléphone).length || 0}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
       {/* Barre de recherche */}
       <Card>
-        <CardHeader>
-          <CardTitle>Rechercher un étudiant</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center gap-2">
-            <Search className="h-4 w-4 text-muted-foreground" />
+        <CardContent className="p-6">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <Search className="h-5 w-5" />
+              <span className="font-semibold whitespace-nowrap">Rechercher</span>
+            </div>
             <Input
               placeholder="Rechercher par nom, prénom ou email..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="max-w-md"
+              className="flex-1"
             />
           </div>
         </CardContent>

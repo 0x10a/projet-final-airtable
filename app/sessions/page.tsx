@@ -173,56 +173,22 @@ export default function SessionsPage() {
         </p>
       </div>
 
-      {/* Statistiques */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Total Sessions</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{sessions?.length || 0}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Sessions à venir</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">
-              {sessions?.filter(s => {
-                const date = parseAirtableDate(s.fields['Date de la session']);
-                return date && date > new Date();
-              }).length || 0}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Sessions passées</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">
-              {sessions?.filter(s => {
-                const date = parseAirtableDate(s.fields['Date de la session']);
-                return date && date <= new Date();
-              }).length || 0}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
       {/* Filtres et tri */}
       <Card>
-        <CardHeader>
-          <CardTitle>Filtres et Tri</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap gap-4">
+        <CardContent className="p-6">
+          <div className="flex flex-wrap items-center gap-6">
+            {/* Titre */}
+            <div className="flex items-center gap-2">
+              <Calendar className="h-5 w-5" />
+              <span className="font-semibold">Filtres et Tri</span>
+            </div>
+
             {/* Filtre par cours */}
             <div className="flex items-center gap-2">
+              <label className="text-sm font-medium whitespace-nowrap">Cours</label>
               <Select value={selectedCours} onValueChange={setSelectedCours}>
-                <SelectTrigger className="w-[250px]">
-                  <SelectValue placeholder="Filtrer par cours" />
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue placeholder="Tous les cours" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Tous les cours</SelectItem>
@@ -233,26 +199,18 @@ export default function SessionsPage() {
                   ))}
                 </SelectContent>
               </Select>
-              {selectedCours !== 'all' && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setSelectedCours('all')}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              )}
             </div>
 
             {/* Tri */}
             <div className="flex items-center gap-2">
+              <label className="text-sm font-medium whitespace-nowrap">Trier par</label>
               <Select value={sortBy} onValueChange={(v) => setSortBy(v as 'nom' | 'date')}>
-                <SelectTrigger className="w-[180px]">
+                <SelectTrigger className="w-[150px]">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="date">Trier par date</SelectItem>
-                  <SelectItem value="nom">Trier par nom</SelectItem>
+                  <SelectItem value="date">Date</SelectItem>
+                  <SelectItem value="nom">Nom</SelectItem>
                 </SelectContent>
               </Select>
               <Button
@@ -263,11 +221,6 @@ export default function SessionsPage() {
                 <ArrowUpDown className="h-4 w-4 mr-1" />
                 {sortOrder === 'asc' ? 'Croissant' : 'Décroissant'}
               </Button>
-            </div>
-
-            {/* Résultats */}
-            <div className="flex items-center text-sm text-muted-foreground ml-auto">
-              {filteredAndSortedSessions.length} session(s) affichée(s)
             </div>
           </div>
         </CardContent>
@@ -295,7 +248,6 @@ export default function SessionsPage() {
                   <TableHead>Nom de la session</TableHead>
                   <TableHead>Cours</TableHead>
                   <TableHead>Date</TableHead>
-                  <TableHead>Présences</TableHead>
                   <TableHead>Statut</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -326,11 +278,6 @@ export default function SessionsPage() {
                           <Calendar className="h-3 w-3" />
                           {formatDateShort(session.fields['Date de la session'])}
                         </div>
-                      </TableCell>
-                      <TableCell>
-                        <span className="text-sm">
-                          {session.fields.Présences?.length || 0} émargement(s)
-                        </span>
                       </TableCell>
                       <TableCell>
                         <Badge variant={isUpcoming ? 'default' : 'secondary'}>

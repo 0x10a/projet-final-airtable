@@ -67,6 +67,7 @@ export interface CoursFields extends BaseFields {
   Modalité?: string;
   Sessions?: string[]; // Linked records IDs
   Inscriptions?: string[]; // Linked records IDs
+  'Nb inscriptions'?: number; // Count field
 }
 
 // Table Sessions

@@ -303,90 +303,66 @@ export default function PresencesPage() {
         </Button>
       </div>
 
-      {/* Statistiques */}
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Total Émargements</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{stats.total}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Présents</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-green-600">{stats.presents}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Absents</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-red-600">{stats.absents}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Taux de Présence</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{stats.tauxPresence.toFixed(1)}%</div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Filtres */}
+      {/* Barre de recherche */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Filter className="h-5 w-5" />
-            Filtres
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex flex-col md:flex-row gap-4">
-            {/* Recherche */}
-            <div className="flex-1">
-              <div className="flex items-center gap-2">
-                <Search className="h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Rechercher par étudiant, session ou cours..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
+        <CardContent className="p-6">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <Search className="h-5 w-5" />
+              <span className="font-semibold whitespace-nowrap">Rechercher</span>
+            </div>
+            <Input
+              placeholder="Rechercher par étudiant, session ou cours..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="flex-1"
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Filtres et Tri */}
+      <Card>
+        <CardContent className="p-6">
+          <div className="flex flex-wrap items-center gap-6">
+            {/* Titre */}
+            <div className="flex items-center gap-2">
+              <Filter className="h-5 w-5" />
+              <span className="font-semibold">Filtres</span>
             </div>
 
             {/* Filtre Cours */}
-            <Select value={filterCours} onValueChange={setFilterCours}>
-              <SelectTrigger className="w-full md:w-[250px]">
-                <SelectValue placeholder="Filtrer par cours" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tous les cours</SelectItem>
-                {coursList.map(c => (
-                  <SelectItem key={c.id} value={c.id}>
-                    {c.fields['Nom du cours']}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="flex items-center gap-2">
+              <label className="text-sm font-medium whitespace-nowrap">Cours</label>
+              <Select value={filterCours} onValueChange={setFilterCours}>
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue placeholder="Tous les cours" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tous les cours</SelectItem>
+                  {coursList.map(c => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.fields['Nom du cours']}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
             {/* Filtre Statut */}
-            <Select value={filterStatut} onValueChange={setFilterStatut}>
-              <SelectTrigger className="w-full md:w-[200px]">
-                <SelectValue placeholder="Filtrer par statut" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tous les statuts</SelectItem>
-                <SelectItem value="present">Présents uniquement</SelectItem>
-                <SelectItem value="absent">Absents uniquement</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="flex items-center gap-2">
+              <label className="text-sm font-medium whitespace-nowrap">Statut</label>
+              <Select value={filterStatut} onValueChange={setFilterStatut}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Tous les statuts" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tous les statuts</SelectItem>
+                  <SelectItem value="present">Présents uniquement</SelectItem>
+                  <SelectItem value="absent">Absents uniquement</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -411,8 +387,8 @@ export default function PresencesPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Date</TableHead>
                     <TableHead>Session</TableHead>
+                    <TableHead>Date</TableHead>
                     <TableHead>Cours</TableHead>
                     <TableHead>Étudiant</TableHead>
                     <TableHead>Statut</TableHead>
@@ -430,11 +406,11 @@ export default function PresencesPage() {
 
                     return (
                       <TableRow key={presence.id}>
-                        <TableCell>
-                          {formatDateShort(date)}
-                        </TableCell>
                         <TableCell className="font-medium">
                           {sessionId ? getSessionName(sessionId) : '-'}
+                        </TableCell>
+                        <TableCell>
+                          {formatDateShort(date)}
                         </TableCell>
                         <TableCell>
                           {coursId ? getCoursName(coursId) : '-'}

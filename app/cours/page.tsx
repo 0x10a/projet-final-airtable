@@ -5,13 +5,20 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { CourseTable } from '@/components/custom/CourseTable';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
+import { Plus, Filter } from 'lucide-react';
 import { CoursFormDialog } from '@/components/custom/CoursFormDialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 interface Cours {
   id: string;
@@ -28,12 +35,16 @@ interface Cours {
     Modalité?: string;
     Sessions?: string[];
     Inscriptions?: string[];
+    'Nb inscriptions'?: number;
   };
 }
 
 export default function CoursPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingCours, setEditingCours] = useState<Cours | null>(null);
+  const [filterNiveau, setFilterNiveau] = useState<string>('all');
+  const [filterModalite, setFilterModalite] = useState<string>('all');
+  const [sortBy, setSortBy] = useState<string>('date-desc');
 
   // Récupérer tous les cours
   const { data: courses, isLoading, refetch } = useQuery<Cours[]>({
@@ -65,6 +76,49 @@ export default function CoursPage() {
     refetch();
   };
 
+  // Filtrer et trier les cours
+  const filteredAndSortedCourses = useMemo(() => {
+    if (!courses) return [];
+
+    let filtered = [...courses];
+
+    // Filtrer par niveau
+    if (filterNiveau !== 'all') {
+      filtered = filtered.filter(c => c.fields.Niveau === filterNiveau);
+    }
+
+    // Filtrer par modalité
+    if (filterModalite !== 'all') {
+      filtered = filtered.filter(c => c.fields.Modalité === filterModalite);
+    }
+
+    // Trier
+    filtered.sort((a, b) => {
+      const dateA = a.fields['Date de début'] ? new Date(a.fields['Date de début']).getTime() : 0;
+      const dateB = b.fields['Date de début'] ? new Date(b.fields['Date de début']).getTime() : 0;
+
+      if (sortBy === 'date-asc') {
+        return dateA - dateB;
+      } else if (sortBy === 'date-desc') {
+        return dateB - dateA;
+      }
+      return 0;
+    });
+
+    return filtered;
+  }, [courses, filterNiveau, filterModalite, sortBy]);
+
+  // Extraire les valeurs uniques pour les filtres
+  const niveaux = useMemo(() => {
+    if (!courses) return [];
+    return Array.from(new Set(courses.map(c => c.fields.Niveau).filter(Boolean))) as string[];
+  }, [courses]);
+
+  const modalites = useMemo(() => {
+    if (!courses) return [];
+    return Array.from(new Set(courses.map(c => c.fields.Modalité).filter(Boolean))) as string[];
+  }, [courses]);
+
   if (isLoading) {
     return (
       <div className="container mx-auto py-10">
@@ -89,48 +143,79 @@ export default function CoursPage() {
         </Button>
       </div>
 
-      {/* Statistiques rapides */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Total Cours</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{courses?.length || 0}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Niveaux Disponibles</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">
-              {new Set(courses?.map(c => c.fields.Niveau).filter(Boolean)).size || 0}
+      {/* Filtres et Tri */}
+      <Card>
+        <CardContent className="p-6">
+          <div className="flex flex-wrap items-center gap-6">
+            {/* Titre */}
+            <div className="flex items-center gap-2">
+              <Filter className="h-5 w-5" />
+              <span className="font-semibold">Filtres et Tri</span>
             </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Formateurs</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">
-              {new Set(courses?.map(c => c.fields.Formateur).filter(Boolean)).size || 0}
+
+            {/* Filtre Niveau */}
+            <div className="flex items-center gap-2">
+              <label className="text-sm font-medium whitespace-nowrap">Niveau</label>
+              <Select value={filterNiveau} onValueChange={setFilterNiveau}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Tous les niveaux" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tous les niveaux</SelectItem>
+                  {niveaux.map(niveau => (
+                    <SelectItem key={niveau} value={niveau}>
+                      {niveau}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-          </CardContent>
-        </Card>
-      </div>
+
+            {/* Filtre Modalité */}
+            <div className="flex items-center gap-2">
+              <label className="text-sm font-medium whitespace-nowrap">Modalité</label>
+              <Select value={filterModalite} onValueChange={setFilterModalite}>
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue placeholder="Toutes les modalités" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Toutes les modalités</SelectItem>
+                  {modalites.map(modalite => (
+                    <SelectItem key={modalite} value={modalite}>
+                      {modalite}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Tri par Date */}
+            <div className="flex items-center gap-2">
+              <label className="text-sm font-medium whitespace-nowrap">Tri par Date</label>
+              <Select value={sortBy} onValueChange={setSortBy}>
+                <SelectTrigger className="w-[150px]">
+                  <SelectValue placeholder="Trier par date" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="date-desc">Plus récent</SelectItem>
+                  <SelectItem value="date-asc">Plus ancien</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Tableau des cours */}
       <Card>
         <CardHeader>
-          <CardTitle>Tous les Cours</CardTitle>
+          <CardTitle>Tous les Cours ({filteredAndSortedCourses.length})</CardTitle>
           <CardDescription>
             Gérez tous les cours disponibles chez Design.academy
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <CourseTable courses={courses || []} onEdit={handleEdit} onRefetch={refetch} />
+          <CourseTable courses={filteredAndSortedCourses} onEdit={handleEdit} onRefetch={refetch} />
         </CardContent>
       </Card>
 
