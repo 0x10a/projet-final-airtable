@@ -5,6 +5,7 @@ import "react-big-calendar/lib/css/react-big-calendar.css";
 import "./calendar.css";
 import { Providers } from "@/components/providers";
 import { NavbarWrapper } from "@/components/layout/navbar-wrapper";
+import { Footer } from "@/components/layout/footer";
 import { RealtimeNotifications } from "@/components/realtime-notifications";
 
 const geistSans = Geist({
@@ -38,6 +39,7 @@ export default function RootLayout({
           <main className="min-h-screen">
             {children}
           </main>
+          <Footer />
         </Providers>
       </body>
     </html>
