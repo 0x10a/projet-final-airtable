@@ -58,14 +58,10 @@ export function EnrollmentForm({
 
   async function onSubmit(values: InscriptionFormData) {
     try {
-      const payload = {
-        ...values,
-        Statut: values.Statut || 'Inscrit',
-      };
-
+      // Statut est un champ calculé dans Airtable, on ne l'envoie pas
       await createMutation.mutateAsync({
         tableName: process.env.NEXT_PUBLIC_AIRTABLE_TABLE_INSCRIPTIONS || 'Inscriptions',
-        fields: payload,
+        fields: values,
       });
 
       toast.success('Inscription créée avec succès !');
@@ -141,30 +137,6 @@ export function EnrollmentForm({
               <FormDescription>
                 Sélectionnez le cours pour l'inscription
               </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        {/* Statut */}
-        <FormField
-          control={form.control}
-          name="Statut"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Statut</FormLabel>
-              <Select onValueChange={field.onChange} value={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="Inscrit">Inscrit</SelectItem>
-                  <SelectItem value="Terminé">Terminé</SelectItem>
-                  <SelectItem value="Annulé">Annulé</SelectItem>
-                </SelectContent>
-              </Select>
               <FormMessage />
             </FormItem>
           )}
