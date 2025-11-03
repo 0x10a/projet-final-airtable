@@ -76,7 +76,6 @@ export function CoursFormDialog({
       Formateur: '',
       'Objectifs pédagogiques': '',
       Prérequis: '',
-      Modalité: undefined,
     },
   });
 
@@ -152,7 +151,6 @@ export function CoursFormDialog({
         Formateur: cours.fields.Formateur || '',
         'Objectifs pédagogiques': cours.fields['Objectifs pédagogiques'] || '',
         Prérequis: cours.fields.Prérequis || '',
-        Modalité: cours.fields.Modalité as any,
       });
     } else {
       form.reset({
@@ -163,7 +161,6 @@ export function CoursFormDialog({
         Formateur: '',
         'Objectifs pédagogiques': '',
         Prérequis: '',
-        Modalité: undefined,
       });
     }
   }, [cours, form]);
@@ -177,7 +174,6 @@ export function CoursFormDialog({
       // Note: "Nom du cours" est un champ calculé dans Airtable, on ne l'envoie pas
       const cleanedData: any = {
         Sujet: data.Sujet,
-        Modalité: data.Modalité,
         'Date de début': data['Date de début'],
         'Durée (jours)': data['Durée (jours)'],
       };
@@ -272,61 +268,33 @@ export function CoursFormDialog({
               )}
             />
 
-            {/* Niveau et Modalité sur la même ligne */}
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="Niveau"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Niveau (optionnel)</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      value={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Sélectionner" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="Débutant">Débutant</SelectItem>
-                        <SelectItem value="Intermédiaire">Intermédiaire</SelectItem>
-                        <SelectItem value="Avancé">Avancé</SelectItem>
-                        <SelectItem value="Expert">Expert</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="Modalité"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Modalité *</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      value={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Sélectionner" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="Présentiel">Présentiel</SelectItem>
-                        <SelectItem value="Distanciel">Distanciel</SelectItem>
-                        <SelectItem value="Hybride">Hybride</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+            {/* Niveau */}
+            <FormField
+              control={form.control}
+              name="Niveau"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Niveau (optionnel)</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    value={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Sélectionner" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="Débutant">Débutant</SelectItem>
+                      <SelectItem value="Intermédiaire">Intermédiaire</SelectItem>
+                      <SelectItem value="Avancé">Avancé</SelectItem>
+                      <SelectItem value="Expert">Expert</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             {/* Date et Durée sur la même ligne */}
             <div className="grid grid-cols-2 gap-4">

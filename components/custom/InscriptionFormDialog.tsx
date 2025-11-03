@@ -138,7 +138,6 @@ export function InscriptionFormDialog({
       Étudiant: [],
       Cours: [],
       "Date d'inscription": new Date().toISOString().split('T')[0],
-      Statut: 'Inscrit',
     },
   });
 
@@ -149,14 +148,12 @@ export function InscriptionFormDialog({
         Étudiant: inscription.fields.Étudiant || [],
         Cours: inscription.fields.Cours || [],
         "Date d'inscription": inscription.fields["Date d'inscription"] || new Date().toISOString().split('T')[0],
-        Statut: inscription.fields.Statut || 'Inscrit',
       });
     } else {
       form.reset({
         Étudiant: [],
         Cours: [],
         "Date d'inscription": new Date().toISOString().split('T')[0],
-        Statut: 'Inscrit',
       });
     }
   }, [inscription, form]);
@@ -396,33 +393,6 @@ export function InscriptionFormDialog({
                   <FormControl>
                     <Input type="date" {...field} />
                   </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Statut */}
-            <FormField
-              control={form.control}
-              name="Statut"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Statut</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    value={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Sélectionner un statut" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="Inscrit">Inscrit</SelectItem>
-                      <SelectItem value="Terminé">Terminé</SelectItem>
-                      <SelectItem value="Annulé">Annulé</SelectItem>
-                    </SelectContent>
-                  </Select>
                   <FormMessage />
                 </FormItem>
               )}

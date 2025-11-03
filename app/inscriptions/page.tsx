@@ -208,37 +208,61 @@ function InscriptionsPageContent() {
   const chartData = useMemo(() => {
     if (!inscriptions) return [];
 
+    // Utiliser des dates locales (sans heures) pour éviter les problèmes de fuseau horaire
     const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
     const thirtyDaysAgo = new Date(today);
     thirtyDaysAgo.setDate(today.getDate() - 30);
 
     // Créer un objet pour compter les inscriptions par jour
     const dailyCounts: Record<string, number> = {};
 
-    // Initialiser tous les jours avec 0
+    // Initialiser tous les jours avec 0 (utiliser format YYYY-MM-DD en local)
     for (let i = 0; i <= 30; i++) {
       const date = new Date(thirtyDaysAgo);
       date.setDate(thirtyDaysAgo.getDate() + i);
-      const dateStr = date.toISOString().split('T')[0];
+      // Format YYYY-MM-DD en local
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const dateStr = `${year}-${month}-${day}`;
       dailyCounts[dateStr] = 0;
     }
 
     // Compter les inscriptions par jour
     inscriptions.forEach(inscription => {
       const dateInscription = parseAirtableDate(inscription.fields["Date d'inscription"]);
-      if (dateInscription && dateInscription >= thirtyDaysAgo && dateInscription <= today) {
-        const dateStr = dateInscription.toISOString().split('T')[0];
-        if (dailyCounts[dateStr] !== undefined) {
-          dailyCounts[dateStr]++;
+      if (dateInscription) {
+        // Convertir en date locale (sans heures)
+        const localDate = new Date(dateInscription);
+        localDate.setHours(0, 0, 0, 0);
+        
+        if (localDate >= thirtyDaysAgo && localDate <= today) {
+          // Format YYYY-MM-DD en local
+          const year = localDate.getFullYear();
+          const month = String(localDate.getMonth() + 1).padStart(2, '0');
+          const day = String(localDate.getDate()).padStart(2, '0');
+          const dateStr = `${year}-${month}-${day}`;
+          
+          if (dailyCounts[dateStr] !== undefined) {
+            dailyCounts[dateStr]++;
+          }
         }
       }
     });
 
     // Convertir en tableau pour le graphique
-    return Object.entries(dailyCounts).map(([date, count]) => ({
-      date: new Date(date).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }),
-      inscriptions: count,
-    }));
+    return Object.entries(dailyCounts).map(([date, count]) => {
+      // Parser la date en local
+      const [year, month, day] = date.split('-').map(Number);
+      const localDate = new Date(year, month - 1, day);
+      
+      return {
+        date: localDate.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }),
+        inscriptions: count,
+      };
+    });
   }, [inscriptions]);
 
   // Filtrer et trier les inscriptions

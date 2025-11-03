@@ -32,7 +32,6 @@ export const coursSchema = z.object({
   Formateur: z.string().optional(),
   'Objectifs pédagogiques': z.string().optional(),
   Prérequis: z.string().optional(),
-  Modalité: z.enum(['Présentiel', 'Distanciel', 'Hybride']),
 });
 
 export type CoursFormData = z.infer<typeof coursSchema>;
@@ -57,7 +56,6 @@ export const inscriptionSchema = z.object({
   Étudiant: z.array(z.string()).min(1, 'Veuillez sélectionner un étudiant'),
   Cours: z.array(z.string()).min(1, 'Veuillez sélectionner un cours'),
   "Date d'inscription": z.string().optional(),
-  Statut: z.enum(['Inscrit', 'Terminé', 'Annulé']).optional(),
 });
 
 export type InscriptionFormData = z.infer<typeof inscriptionSchema>;
