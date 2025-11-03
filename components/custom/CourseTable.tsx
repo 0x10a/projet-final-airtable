@@ -105,26 +105,6 @@ export function CourseTable({ courses, onEdit, onRefetch }: CourseTableProps) {
       cell: ({ row }) => row.original.fields.Formateur || '-',
     },
     {
-      accessorKey: 'fields.Modalité',
-      header: 'Modalité',
-      cell: ({ row }) => {
-        const modalite = row.original.fields.Modalité;
-        if (!modalite) return '-';
-        
-        const colors: Record<string, string> = {
-          Présentiel: 'bg-blue-100 text-blue-800',
-          Distanciel: 'bg-purple-100 text-purple-800',
-          Hybride: 'bg-indigo-100 text-indigo-800',
-        };
-
-        return (
-          <Badge variant="outline" className={colors[modalite] || ''}>
-            {modalite}
-          </Badge>
-        );
-      },
-    },
-    {
       accessorKey: 'fields.Nb inscriptions',
       header: 'Étudiants inscrits',
       cell: ({ row }) => {

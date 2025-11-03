@@ -112,9 +112,6 @@ export default async function CourseDetailPage({ params }: CourseDetailPageProps
               {course.fields.Niveau && (
                 <Badge variant="outline">{course.fields.Niveau}</Badge>
               )}
-              {course.fields.Modalité && (
-                <Badge variant="outline">{course.fields.Modalité}</Badge>
-              )}
               {course.fields.Sujet && (
                 <Badge variant="secondary">{course.fields.Sujet}</Badge>
               )}

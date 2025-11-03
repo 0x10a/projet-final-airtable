@@ -43,7 +43,6 @@ export default function CoursPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingCours, setEditingCours] = useState<Cours | null>(null);
   const [filterNiveau, setFilterNiveau] = useState<string>('all');
-  const [filterModalite, setFilterModalite] = useState<string>('all');
   const [sortBy, setSortBy] = useState<string>('date-desc');
 
   // Récupérer tous les cours
@@ -87,11 +86,6 @@ export default function CoursPage() {
       filtered = filtered.filter(c => c.fields.Niveau === filterNiveau);
     }
 
-    // Filtrer par modalité
-    if (filterModalite !== 'all') {
-      filtered = filtered.filter(c => c.fields.Modalité === filterModalite);
-    }
-
     // Trier
     filtered.sort((a, b) => {
       const dateA = a.fields['Date de début'] ? new Date(a.fields['Date de début']).getTime() : 0;
@@ -106,17 +100,12 @@ export default function CoursPage() {
     });
 
     return filtered;
-  }, [courses, filterNiveau, filterModalite, sortBy]);
+  }, [courses, filterNiveau, sortBy]);
 
   // Extraire les valeurs uniques pour les filtres
   const niveaux = useMemo(() => {
     if (!courses) return [];
     return Array.from(new Set(courses.map(c => c.fields.Niveau).filter(Boolean))) as string[];
-  }, [courses]);
-
-  const modalites = useMemo(() => {
-    if (!courses) return [];
-    return Array.from(new Set(courses.map(c => c.fields.Modalité).filter(Boolean))) as string[];
   }, [courses]);
 
   if (isLoading) {
@@ -165,24 +154,6 @@ export default function CoursPage() {
                   {niveaux.map(niveau => (
                     <SelectItem key={niveau} value={niveau}>
                       {niveau}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Filtre Modalité */}
-            <div className="flex items-center gap-2">
-              <label className="text-sm font-medium whitespace-nowrap">Modalité</label>
-              <Select value={filterModalite} onValueChange={setFilterModalite}>
-                <SelectTrigger className="w-[200px]">
-                  <SelectValue placeholder="Toutes les modalités" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Toutes les modalités</SelectItem>
-                  {modalites.map(modalite => (
-                    <SelectItem key={modalite} value={modalite}>
-                      {modalite}
                     </SelectItem>
                   ))}
                 </SelectContent>
