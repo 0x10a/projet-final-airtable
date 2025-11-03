@@ -5,7 +5,7 @@
 
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { Suspense, useState, useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -59,7 +59,7 @@ interface Cours {
   };
 }
 
-export default function InscriptionsPage() {
+function InscriptionsPageContent() {
   const searchParams = useSearchParams();
   const etudiantParam = searchParams.get('etudiant'); // Récupérer le paramètre étudiant de l'URL
   const coursParam = searchParams.get('cours'); // Récupérer le paramètre cours de l'URL
@@ -573,5 +573,17 @@ export default function InscriptionsPage() {
         onSuccess={handleSuccess}
       />
     </div>
+  );
+}
+
+export default function InscriptionsPage() {
+  return (
+    <Suspense fallback={
+      <div className="container mx-auto py-10">
+        <p>Chargement des inscriptions...</p>
+      </div>
+    }>
+      <InscriptionsPageContent />
+    </Suspense>
   );
 }
