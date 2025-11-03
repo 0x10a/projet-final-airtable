@@ -10,7 +10,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Calendar, BookOpen, Trash2, X, ArrowUpDown } from 'lucide-react';
+import { Calendar, BookOpen, Trash2, X, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { parseAirtableDate, formatDateShort } from '@/lib/date-utils';
 import {
   Table,
@@ -52,8 +52,17 @@ function SessionsPageContent() {
   const coursParam = searchParams.get('cours'); // Récupérer le paramètre cours de l'URL
   
   const [selectedCours, setSelectedCours] = useState<string>('all');
-  const [sortBy, setSortBy] = useState<'nom' | 'date'>('date');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [sortColumn, setSortColumn] = useState<'nom' | 'date' | null>('date');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+
+  const handleSort = (column: 'nom' | 'date') => {
+    if (sortColumn === column) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortColumn(column);
+      setSortDirection('asc');
+    }
+  };
 
   // Récupérer toutes les sessions
   const { data: sessions, isLoading, refetch } = useQuery<Session[]>({
@@ -138,22 +147,23 @@ function SessionsPageContent() {
 
     // Trier
     const sorted = [...filtered].sort((a, b) => {
-      if (sortBy === 'date') {
+      let comparison = 0;
+      
+      if (sortColumn === 'date') {
         const dateA = parseAirtableDate(a.fields['Date de la session'])?.getTime() || 0;
         const dateB = parseAirtableDate(b.fields['Date de la session'])?.getTime() || 0;
-        return sortOrder === 'desc' ? dateB - dateA : dateA - dateB;
-      } else {
-        // Tri par nom
+        comparison = dateA - dateB;
+      } else if (sortColumn === 'nom') {
         const nameA = a.fields['Nom de la session'].toLowerCase();
         const nameB = b.fields['Nom de la session'].toLowerCase();
-        return sortOrder === 'desc' 
-          ? nameB.localeCompare(nameA)
-          : nameA.localeCompare(nameB);
+        comparison = nameA.localeCompare(nameB);
       }
+      
+      return sortDirection === 'asc' ? comparison : -comparison;
     });
 
     return sorted;
-  }, [sessions, selectedCours, sortBy, sortOrder]);
+  }, [sessions, selectedCours, sortColumn, sortDirection]);
 
   if (isLoading) {
     return (
@@ -180,7 +190,7 @@ function SessionsPageContent() {
             {/* Titre */}
             <div className="flex items-center gap-2">
               <Calendar className="h-5 w-5" />
-              <span className="font-semibold">Filtres et Tri</span>
+              <span className="font-semibold">Filtres</span>
             </div>
 
             {/* Filtre par cours */}
@@ -201,27 +211,7 @@ function SessionsPageContent() {
               </Select>
             </div>
 
-            {/* Tri */}
-            <div className="flex items-center gap-2">
-              <label className="text-sm font-medium whitespace-nowrap">Trier par</label>
-              <Select value={sortBy} onValueChange={(v) => setSortBy(v as 'nom' | 'date')}>
-                <SelectTrigger className="w-[150px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="date">Date</SelectItem>
-                  <SelectItem value="nom">Nom</SelectItem>
-                </SelectContent>
-              </Select>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-              >
-                <ArrowUpDown className="h-4 w-4 mr-1" />
-                {sortOrder === 'asc' ? 'Croissant' : 'Décroissant'}
-              </Button>
-            </div>
+
           </div>
         </CardContent>
       </Card>
@@ -245,9 +235,29 @@ function SessionsPageContent() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Nom de la session</TableHead>
+                  <TableHead>
+                    <div 
+                      onClick={() => handleSort('nom')} 
+                      className="cursor-pointer flex items-center gap-1 hover:text-primary transition-colors"
+                    >
+                      Nom de la session
+                      {sortColumn === 'nom' ? (
+                        sortDirection === 'asc' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />
+                      ) : <ArrowUpDown className="h-4 w-4 opacity-50" />}
+                    </div>
+                  </TableHead>
                   <TableHead>Cours</TableHead>
-                  <TableHead>Date</TableHead>
+                  <TableHead>
+                    <div 
+                      onClick={() => handleSort('date')} 
+                      className="cursor-pointer flex items-center gap-1 hover:text-primary transition-colors"
+                    >
+                      Date
+                      {sortColumn === 'date' ? (
+                        sortDirection === 'asc' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />
+                      ) : <ArrowUpDown className="h-4 w-4 opacity-50" />}
+                    </div>
+                  </TableHead>
                   <TableHead>Statut</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>

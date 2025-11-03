@@ -6,7 +6,7 @@ import { Navbar } from './navbar';
 export function NavbarWrapper() {
   const pathname = usePathname();
   
-  // Cacher la navbar sur les pages d'émargement
+  // Cacher la navbar sur les pages de présence
   if (pathname?.startsWith('/emargement')) {
     return null;
   }

@@ -18,7 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Plus, UserPlus, Edit, Trash2, Search, Filter, ArrowUpDown, TrendingUp } from 'lucide-react';
+import { Plus, UserPlus, Edit, Trash2, Search, Filter, ArrowUpDown, ArrowUp, ArrowDown, TrendingUp } from 'lucide-react';
 import { InscriptionFormDialog } from '@/components/custom/InscriptionFormDialog';
 import { formatDateShort, parseAirtableDate } from '@/lib/date-utils';
 import {
@@ -69,8 +69,17 @@ function InscriptionsPageContent() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCours, setSelectedCours] = useState<string>('all');
   const [selectedEtudiant, setSelectedEtudiant] = useState<string>('all');
-  const [sortBy, setSortBy] = useState<'date' | 'etudiant' | 'statut'>('date');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [sortColumn, setSortColumn] = useState<'date' | 'etudiant' | 'statut' | null>('date');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+
+  const handleSort = (column: 'date' | 'etudiant' | 'statut') => {
+    if (sortColumn === column) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortColumn(column);
+      setSortDirection('asc');
+    }
+  };
 
   // Récupérer toutes les inscriptions
   const { data: inscriptions, isLoading, refetch } = useQuery<Inscription[]>({
@@ -296,24 +305,23 @@ function InscriptionsPageContent() {
 
   // Trier les inscriptions filtrées
   const sortedInscriptions = [...filteredInscriptions].sort((a, b) => {
-    if (sortBy === 'date') {
+    let comparison = 0;
+    
+    if (sortColumn === 'date') {
       const dateA = parseAirtableDate(a.fields["Date d'inscription"])?.getTime() || 0;
       const dateB = parseAirtableDate(b.fields["Date d'inscription"])?.getTime() || 0;
-      return sortOrder === 'desc' ? dateB - dateA : dateA - dateB;
-    } else if (sortBy === 'etudiant') {
+      comparison = dateA - dateB;
+    } else if (sortColumn === 'etudiant') {
       const etudiantA = a.fields.Étudiant?.[0] ? getEtudiantName(a.fields.Étudiant[0]).toLowerCase() : '';
       const etudiantB = b.fields.Étudiant?.[0] ? getEtudiantName(b.fields.Étudiant[0]).toLowerCase() : '';
-      return sortOrder === 'desc' 
-        ? etudiantB.localeCompare(etudiantA)
-        : etudiantA.localeCompare(etudiantB);
-    } else {
-      // Tri par statut
+      comparison = etudiantA.localeCompare(etudiantB);
+    } else if (sortColumn === 'statut') {
       const statutA = a.fields.Statut || '';
       const statutB = b.fields.Statut || '';
-      return sortOrder === 'desc'
-        ? statutB.localeCompare(statutA)
-        : statutA.localeCompare(statutB);
+      comparison = statutA.localeCompare(statutB);
     }
+    
+    return sortDirection === 'asc' ? comparison : -comparison;
   });
 
   // Statistiques par statut
@@ -441,7 +449,7 @@ function InscriptionsPageContent() {
             {/* Titre */}
             <div className="flex items-center gap-2">
               <Filter className="h-5 w-5" />
-              <span className="font-semibold">Filtres et Tri</span>
+              <span className="font-semibold">Filtres</span>
             </div>
 
             {/* Filtre par cours */}
@@ -480,28 +488,7 @@ function InscriptionsPageContent() {
               </Select>
             </div>
 
-            {/* Tri */}
-            <div className="flex items-center gap-2">
-              <label className="text-sm font-medium whitespace-nowrap">Trier par</label>
-              <Select value={sortBy} onValueChange={(v) => setSortBy(v as 'date' | 'etudiant' | 'statut')}>
-                <SelectTrigger className="w-[150px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="date">Date</SelectItem>
-                  <SelectItem value="etudiant">Étudiant</SelectItem>
-                  <SelectItem value="statut">Statut</SelectItem>
-                </SelectContent>
-              </Select>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-              >
-                <ArrowUpDown className="h-4 w-4 mr-1" />
-                {sortOrder === 'asc' ? 'Croissant' : 'Décroissant'}
-              </Button>
-            </div>
+
           </div>
         </CardContent>
       </Card>
@@ -525,11 +512,41 @@ function InscriptionsPageContent() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Étudiant</TableHead>
+                  <TableHead>
+                    <div 
+                      onClick={() => handleSort('etudiant')} 
+                      className="cursor-pointer flex items-center gap-1 hover:text-primary transition-colors"
+                    >
+                      Étudiant
+                      {sortColumn === 'etudiant' ? (
+                        sortDirection === 'asc' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />
+                      ) : <ArrowUpDown className="h-4 w-4 opacity-50" />}
+                    </div>
+                  </TableHead>
                   <TableHead>Cours</TableHead>
                   <TableHead>Date de début</TableHead>
-                  <TableHead>Date d'inscription</TableHead>
-                  <TableHead>Statut</TableHead>
+                  <TableHead>
+                    <div 
+                      onClick={() => handleSort('date')} 
+                      className="cursor-pointer flex items-center gap-1 hover:text-primary transition-colors"
+                    >
+                      Date d'inscription
+                      {sortColumn === 'date' ? (
+                        sortDirection === 'asc' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />
+                      ) : <ArrowUpDown className="h-4 w-4 opacity-50" />}
+                    </div>
+                  </TableHead>
+                  <TableHead>
+                    <div 
+                      onClick={() => handleSort('statut')} 
+                      className="cursor-pointer flex items-center gap-1 hover:text-primary transition-colors"
+                    >
+                      Statut
+                      {sortColumn === 'statut' ? (
+                        sortDirection === 'asc' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />
+                      ) : <ArrowUpDown className="h-4 w-4 opacity-50" />}
+                    </div>
+                  </TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>

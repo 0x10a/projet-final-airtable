@@ -11,7 +11,7 @@ import { DataTable } from '@/components/data-table';
 import { AirtableRecord, CoursFields } from '@/lib/airtable';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Eye, Edit, Trash2, Calendar } from 'lucide-react';
+import { Eye, Edit, Trash2, Calendar, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { formatDateShort } from '@/lib/date-utils';
 import { toast } from 'sonner';
@@ -21,9 +21,12 @@ interface CourseTableProps {
   courses: AirtableRecord<CoursFields>[];
   onEdit?: (cours: AirtableRecord<CoursFields>) => void;
   onRefetch?: () => void;
+  onSort?: (column: 'date' | 'nom') => void;
+  sortColumn?: 'date' | 'nom' | null;
+  sortDirection?: 'asc' | 'desc';
 }
 
-export function CourseTable({ courses, onEdit, onRefetch }: CourseTableProps) {
+export function CourseTable({ courses, onEdit, onRefetch, onSort, sortColumn, sortDirection }: CourseTableProps) {
   const router = useRouter();
 
   const handleDelete = async (coursId: string) => {
@@ -52,7 +55,17 @@ export function CourseTable({ courses, onEdit, onRefetch }: CourseTableProps) {
   const columns: ColumnDef<AirtableRecord<CoursFields>>[] = [
     {
       accessorKey: 'fields.Nom du cours',
-      header: 'Nom du cours',
+      header: () => (
+        <div 
+          onClick={() => onSort?.('nom')} 
+          className="cursor-pointer flex items-center gap-1 hover:text-primary transition-colors"
+        >
+          Nom du cours
+          {sortColumn === 'nom' ? (
+            sortDirection === 'asc' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />
+          ) : <ArrowUpDown className="h-4 w-4 opacity-50" />}
+        </div>
+      ),
       cell: ({ row }) => (
         <div className="font-medium">{row.original.fields['Nom du cours']}</div>
       ),
@@ -85,7 +98,17 @@ export function CourseTable({ courses, onEdit, onRefetch }: CourseTableProps) {
     },
     {
       accessorKey: 'fields.Date de début',
-      header: 'Date de début',
+      header: () => (
+        <div 
+          onClick={() => onSort?.('date')} 
+          className="cursor-pointer flex items-center gap-1 hover:text-primary transition-colors"
+        >
+          Date de début
+          {sortColumn === 'date' ? (
+            sortDirection === 'asc' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />
+          ) : <ArrowUpDown className="h-4 w-4 opacity-50" />}
+        </div>
+      ),
       cell: ({ row }) => {
         const date = row.original.fields['Date de début'];
         return formatDateShort(date);

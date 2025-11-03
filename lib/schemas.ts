@@ -61,7 +61,7 @@ export const inscriptionSchema = z.object({
 export type InscriptionFormData = z.infer<typeof inscriptionSchema>;
 
 // ========================================
-// SCHÉMA PRÉSENCE (ÉMARGEMENT)
+// SCHÉMA PRÉSENCE
 // ========================================
 
 export const presenceSchema = z.object({
@@ -75,7 +75,7 @@ export const presenceSchema = z.object({
 export type PresenceFormData = z.infer<typeof presenceSchema>;
 
 // ========================================
-// SCHÉMA SIMPLIFIÉ POUR L'ÉMARGEMENT PUBLIC
+// SCHÉMA SIMPLIFIÉ POUR LA PRÉSENCE PUBLIQUE
 // ========================================
 
 export const emargementPublicSchema = z.object({

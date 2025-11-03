@@ -1,6 +1,6 @@
 /**
  * Page Rapports Qualiopi - /app/rapports/page.tsx
- * Génération de rapports conformes Qualiopi (feuilles d'émargement, registre, bilan)
+ * Génération de rapports conformes Qualiopi (feuilles de présence, registre, bilan)
  */
 
 'use client';
@@ -16,7 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { FileText, Download, Calendar, Users, CheckSquare, BarChart3 } from 'lucide-react';
+import { FileText, Download, Calendar, Users, CheckSquare, BarChart3, ClipboardList } from 'lucide-react';
 import { format } from 'date-fns';
 import { formatDateNumeric, formatDateTime, formatDateShort } from '@/lib/date-utils';
 import { toast } from 'sonner';
@@ -127,7 +127,7 @@ export default function RapportsPage() {
     return etudiant ? `${etudiant.fields.Prénom} ${etudiant.fields.Nom}` : 'Étudiant inconnu';
   };
 
-  // Export feuille d'émargement pour une session
+  // Export feuille de présence pour une session
   const exportFeuilleEmargement = () => {
     if (!selectedSession) {
       toast.error('Veuillez sélectionner une session');
@@ -191,7 +191,7 @@ export default function RapportsPage() {
     link.click();
     document.body.removeChild(link);
 
-    toast.success('Feuille d\'émargement exportée avec succès !');
+    toast.success('Feuille de présence exportée avec succès !');
   };
 
   // Export registre de présence pour un cours
@@ -344,12 +344,12 @@ export default function RapportsPage() {
 
       {/* Cartes de rapports */}
       <div className="grid gap-6 md:grid-cols-2">
-        {/* Feuille d'émargement */}
+        {/* Feuille de présence */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5" />
-              Feuille d'émargement
+              <ClipboardList className="h-5 w-5" />
+              Feuille de présence
             </CardTitle>
             <CardDescription>
               Export par session avec signatures et horodatages
@@ -374,7 +374,7 @@ export default function RapportsPage() {
             </div>
             <Button onClick={exportFeuilleEmargement} className="w-full" disabled={!selectedSession}>
               <Download className="mr-2 h-4 w-4" />
-              Télécharger la feuille d'émargement
+              Télécharger la feuille de présence
             </Button>
           </CardContent>
         </Card>
@@ -512,7 +512,7 @@ export default function RapportsPage() {
         <CardContent className="text-sm text-blue-800 space-y-2">
           <p>
             <CheckSquare className="inline h-4 w-4 mr-2" />
-            <strong>Indicateur 11:</strong> Suivi de la réalisation des prestations (feuilles d'émargement)
+            <strong>Indicateur 11:</strong> Suivi de la réalisation des prestations (feuilles de présence)
           </p>
           <p>
             <CheckSquare className="inline h-4 w-4 mr-2" />

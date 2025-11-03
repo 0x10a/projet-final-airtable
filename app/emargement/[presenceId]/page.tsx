@@ -1,5 +1,5 @@
 /**
- * Page Émargement Individuel - /app/emargement/[presenceId]/page.tsx
+ * Page Présence Individuelle - /app/emargement/[presenceId]/page.tsx
  * Page publique pour qu'un étudiant confirme SA présence
  * Accessible via lien unique envoyé par email
  */
@@ -96,7 +96,7 @@ export default async function EmargementPage({ params }: EmargementPageProps) {
         <div className="container mx-auto max-w-2xl px-4">
           {/* En-tête */}
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold mb-2">Feuille d'émargement</h1>
+            <h1 className="text-3xl font-bold mb-2">Feuille de présence</h1>
             <p className="text-muted-foreground">
               Confirmez votre présence pour cette session de formation
             </p>
@@ -158,7 +158,7 @@ export default async function EmargementPage({ params }: EmargementPageProps) {
           </CardContent>
         </Card>
 
-        {/* Formulaire d'émargement */}
+        {/* Formulaire de présence */}
         <Card>
           <CardHeader>
             <CardTitle>Confirmer ma Présence</CardTitle>
@@ -180,7 +180,7 @@ export default async function EmargementPage({ params }: EmargementPageProps) {
         {/* Note informative */}
         <div className="mt-6 text-center text-sm text-muted-foreground">
           <p>
-            Cette feuille d'émargement numérique respecte les exigences de traçabilité Qualiopi.
+            Cette feuille de présence numérique respecte les exigences de traçabilité Qualiopi.
           </p>
           <p className="mt-2">
             Design.academy • Formation professionnelle

@@ -1,6 +1,6 @@
 /**
- * Page Historique des Présences - /app/presences/page.tsx
- * Visualisation de tous les émargements avec filtres et export CSV
+ * Page Gestion des Présences - /app/presences/page.tsx
+ * Visualisation de toutes les présences avec filtres et export CSV
  */
 
 'use client';
@@ -294,7 +294,7 @@ export default function PresencesPage() {
         <div>
           <h1 className="text-4xl font-bold">Feuilles de présences</h1>
           <p className="text-muted-foreground mt-2">
-            Visualisez tous les émargements avec filtres avancés
+            Visualisez toutes les présences avec filtres avancés
           </p>
         </div>
         <Button onClick={handleExportCSV} disabled={!filteredPresences || filteredPresences.length === 0}>
@@ -370,9 +370,9 @@ export default function PresencesPage() {
       {/* Tableau des présences */}
       <Card>
         <CardHeader>
-          <CardTitle>Liste des Émargements ({filteredPresences.length})</CardTitle>
+          <CardTitle>Liste des Présences ({filteredPresences.length})</CardTitle>
           <CardDescription>
-            Tous les émargements enregistrés dans le système
+            Toutes les présences enregistrées dans le système
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -476,7 +476,7 @@ export default function PresencesPage() {
                               target="_blank"
                               rel="noopener noreferrer"
                             >
-                              Feuille d'émargement
+                              Feuille de présence
                             </a>
                           </Button>
                         </TableCell>

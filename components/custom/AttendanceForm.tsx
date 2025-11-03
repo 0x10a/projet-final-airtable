@@ -1,5 +1,5 @@
 /**
- * Composant AttendanceForm - Formulaire d'émargement individuel
+ * Composant AttendanceForm - Formulaire de présence individuel
  * Utilisé dans /app/emargement/[presenceId]/page.tsx
  * 
  * Les présences sont déjà créées par l'automate Airtable.
@@ -27,7 +27,7 @@ import { z } from 'zod';
 import { useState, useRef } from 'react';
 import SignatureCanvas from 'react-signature-canvas';
 
-// Schéma simplifié pour émargement individuel (signature base64)
+// Schéma simplifié pour présence individuelle (signature base64)
 const signatureSchema = z.object({
   signature: z.string().min(1, 'La signature est requise'),
 });
@@ -79,8 +79,8 @@ export function AttendanceForm({ presenceId, etudiant, isAlreadySigned }: Attend
       toast.success('Votre présence a été confirmée avec succès !');
       form.reset();
     } catch (error: any) {
-      console.error('Erreur émargement:', error);
-      toast.error(error.message || 'Erreur lors de l\'émargement');
+      console.error('Erreur présence:', error);
+      toast.error(error.message || 'Erreur lors de la confirmation de présence');
     } finally {
       setIsSubmitting(false);
     }

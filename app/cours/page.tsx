@@ -43,7 +43,8 @@ export default function CoursPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingCours, setEditingCours] = useState<Cours | null>(null);
   const [filterNiveau, setFilterNiveau] = useState<string>('all');
-  const [sortBy, setSortBy] = useState<string>('date-desc');
+  const [sortColumn, setSortColumn] = useState<'date' | 'nom' | null>('date');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
 
   // Récupérer tous les cours
   const { data: courses, isLoading, refetch } = useQuery<Cours[]>({
@@ -75,6 +76,16 @@ export default function CoursPage() {
     refetch();
   };
 
+  // Gérer le clic sur un en-tête de colonne pour le tri
+  const handleSort = (column: 'date' | 'nom') => {
+    if (sortColumn === column) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortColumn(column);
+      setSortDirection('asc');
+    }
+  };
+
   // Filtrer et trier les cours
   const filteredAndSortedCourses = useMemo(() => {
     if (!courses) return [];
@@ -86,21 +97,27 @@ export default function CoursPage() {
       filtered = filtered.filter(c => c.fields.Niveau === filterNiveau);
     }
 
-    // Trier
-    filtered.sort((a, b) => {
-      const dateA = a.fields['Date de début'] ? new Date(a.fields['Date de début']).getTime() : 0;
-      const dateB = b.fields['Date de début'] ? new Date(b.fields['Date de début']).getTime() : 0;
-
-      if (sortBy === 'date-asc') {
-        return dateA - dateB;
-      } else if (sortBy === 'date-desc') {
-        return dateB - dateA;
-      }
-      return 0;
-    });
+    // Trier selon la colonne et direction
+    if (sortColumn) {
+      filtered.sort((a, b) => {
+        let comparison = 0;
+        
+        if (sortColumn === 'date') {
+          const dateA = a.fields['Date de début'] ? new Date(a.fields['Date de début']).getTime() : 0;
+          const dateB = b.fields['Date de début'] ? new Date(b.fields['Date de début']).getTime() : 0;
+          comparison = dateA - dateB;
+        } else if (sortColumn === 'nom') {
+          const nomA = a.fields['Nom du cours'] || '';
+          const nomB = b.fields['Nom du cours'] || '';
+          comparison = nomA.localeCompare(nomB);
+        }
+        
+        return sortDirection === 'asc' ? comparison : -comparison;
+      });
+    }
 
     return filtered;
-  }, [courses, filterNiveau, sortBy]);
+  }, [courses, filterNiveau, sortColumn, sortDirection]);
 
   // Extraire les valeurs uniques pour les filtres
   const niveaux = useMemo(() => {
@@ -139,7 +156,7 @@ export default function CoursPage() {
             {/* Titre */}
             <div className="flex items-center gap-2">
               <Filter className="h-5 w-5" />
-              <span className="font-semibold">Filtres et Tri</span>
+              <span className="font-semibold">Filtres</span>
             </div>
 
             {/* Filtre Niveau */}
@@ -159,20 +176,6 @@ export default function CoursPage() {
                 </SelectContent>
               </Select>
             </div>
-
-            {/* Tri par Date */}
-            <div className="flex items-center gap-2">
-              <label className="text-sm font-medium whitespace-nowrap">Tri par Date</label>
-              <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className="w-[150px]">
-                  <SelectValue placeholder="Trier par date" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="date-desc">Plus récent</SelectItem>
-                  <SelectItem value="date-asc">Plus ancien</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
           </div>
         </CardContent>
       </Card>
@@ -186,7 +189,14 @@ export default function CoursPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <CourseTable courses={filteredAndSortedCourses} onEdit={handleEdit} onRefetch={refetch} />
+          <CourseTable 
+            courses={filteredAndSortedCourses} 
+            onEdit={handleEdit} 
+            onRefetch={refetch}
+            onSort={handleSort}
+            sortColumn={sortColumn}
+            sortDirection={sortDirection}
+          />
         </CardContent>
       </Card>
 
