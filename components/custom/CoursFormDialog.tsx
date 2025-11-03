@@ -80,25 +80,57 @@ export function CoursFormDialog({
     },
   });
 
-  // Charger les sujets existants depuis Airtable
+  // Charger les options du champ Sujet depuis Airtable Metadata API
   useEffect(() => {
     const fetchSujets = async () => {
       try {
-        const res = await fetch('/api/airtable?tableName=Cours');
+        // Récupérer les métadonnées de la table Cours
+        const res = await fetch('/api/airtable/metadata?tableName=Cours');
         if (res.ok) {
           const data = await res.json();
-          // Extraire les sujets uniques
-          const uniqueSujets = Array.from(
-            new Set(
-              data.records
-                .map((r: any) => r.fields.Sujet)
-                .filter((s: any) => s)
-            )
-          ) as string[];
-          setSujets(uniqueSujets.sort());
+          
+          // Trouver le champ "Sujet"
+          const sujetField = data.table.fields.find((f: any) => f.name === 'Sujet');
+          
+          if (sujetField && sujetField.options && sujetField.options.choices) {
+            // Extraire les noms des options du Single Select
+            const choices = sujetField.options.choices.map((choice: any) => choice.name);
+            setSujets(choices.sort());
+          } else {
+            // Fallback : récupérer les sujets utilisés si l'API metadata ne fonctionne pas
+            const coursRes = await fetch('/api/airtable?tableName=Cours');
+            if (coursRes.ok) {
+              const coursData = await coursRes.json();
+              const usedSujets = Array.from(
+                new Set(
+                  coursData.records
+                    .map((r: any) => r.fields.Sujet)
+                    .filter((s: any) => s)
+                )
+              ) as string[];
+              setSujets(usedSujets.sort());
+            }
+          }
         }
       } catch (error) {
         console.error('Erreur lors du chargement des sujets:', error);
+        // En cas d'erreur, essayer de récupérer les sujets utilisés
+        try {
+          const coursRes = await fetch('/api/airtable?tableName=Cours');
+          if (coursRes.ok) {
+            const coursData = await coursRes.json();
+            const usedSujets = Array.from(
+              new Set(
+                coursData.records
+                  .map((r: any) => r.fields.Sujet)
+                  .filter((s: any) => s)
+              )
+            ) as string[];
+            setSujets(usedSujets.sort());
+          }
+        } catch (fallbackError) {
+          console.error('Erreur fallback:', fallbackError);
+        }
       } finally {
         setLoading(false);
       }
