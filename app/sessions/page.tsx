@@ -5,7 +5,7 @@
 
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { Suspense, useState, useMemo, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -47,7 +47,7 @@ interface Cours {
   };
 }
 
-export default function SessionsPage() {
+function SessionsPageContent() {
   const searchParams = useSearchParams();
   const coursParam = searchParams.get('cours'); // Récupérer le paramètre cours de l'URL
   
@@ -302,5 +302,17 @@ export default function SessionsPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function SessionsPage() {
+  return (
+    <Suspense fallback={
+      <div className="container mx-auto py-10">
+        <p>Chargement des sessions...</p>
+      </div>
+    }>
+      <SessionsPageContent />
+    </Suspense>
   );
 }
