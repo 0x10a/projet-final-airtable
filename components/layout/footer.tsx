@@ -41,7 +41,7 @@ export function Footer() {
     staleTime: 30000,
   });
 
-  const appVersion = 'v1.0.3'; // À incrémenter à chaque modification importante
+  const appVersion = 'v1.0.4'; // À incrémenter à chaque modification importante
 
   return (
     <footer className="border-t bg-muted/30 py-3 text-xs text-muted-foreground">
