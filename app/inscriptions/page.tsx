@@ -323,63 +323,65 @@ export default function InscriptionsPage() {
         </Button>
       </div>
 
-      {/* Courbe d'évolution des inscriptions */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <TrendingUp className="h-5 w-5" />
-            Évolution des inscriptions (30 derniers jours)
-          </CardTitle>
-          <CardDescription>
-            {chartData.reduce((sum, day) => sum + day.inscriptions, 0)} inscription(s) au total
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {chartData.length === 0 ? (
-            <p className="text-center py-8 text-muted-foreground">
-              Aucune donnée disponible pour afficher le graphique
-            </p>
-          ) : (
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart 
-                data={chartData}
-                margin={{ top: 5, right: 20, left: 10, bottom: 5 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                <XAxis 
-                  dataKey="date" 
-                  tick={{ fontSize: 11 }}
-                  stroke="#6b7280"
-                />
-                <YAxis 
-                  allowDecimals={false}
-                  tick={{ fontSize: 11 }}
-                  stroke="#6b7280"
-                />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: '#ffffff',
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '8px',
-                    padding: '8px 12px'
-                  }}
-                  labelStyle={{ fontWeight: 'bold', marginBottom: '4px' }}
-                />
-                <Line 
-                  type="linear" 
-                  dataKey="inscriptions" 
-                  stroke="#2563eb" 
-                  strokeWidth={3}
-                  dot={{ fill: '#2563eb', r: 4 }}
-                  activeDot={{ r: 6, fill: '#2563eb' }}
-                  name="Inscriptions"
-                  isAnimationActive={true}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          )}
-        </CardContent>
-      </Card>
+      {/* Courbe d'évolution des inscriptions - Masquer si un filtre est actif */}
+      {selectedCours === 'all' && selectedEtudiant === 'all' && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5" />
+              Évolution des inscriptions (30 derniers jours)
+            </CardTitle>
+            <CardDescription>
+              {chartData.reduce((sum, day) => sum + day.inscriptions, 0)} inscription(s) au total
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {chartData.length === 0 ? (
+              <p className="text-center py-8 text-muted-foreground">
+                Aucune donnée disponible pour afficher le graphique
+              </p>
+            ) : (
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart 
+                  data={chartData}
+                  margin={{ top: 5, right: 20, left: 10, bottom: 5 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                  <XAxis 
+                    dataKey="date" 
+                    tick={{ fontSize: 11 }}
+                    stroke="#6b7280"
+                  />
+                  <YAxis 
+                    allowDecimals={false}
+                    tick={{ fontSize: 11 }}
+                    stroke="#6b7280"
+                  />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: '#ffffff',
+                      border: '1px solid #e5e7eb',
+                      borderRadius: '8px',
+                      padding: '8px 12px'
+                    }}
+                    labelStyle={{ fontWeight: 'bold', marginBottom: '4px' }}
+                  />
+                  <Line 
+                    type="linear" 
+                    dataKey="inscriptions" 
+                    stroke="#2563eb" 
+                    strokeWidth={3}
+                    dot={{ fill: '#2563eb', r: 4 }}
+                    activeDot={{ r: 6, fill: '#2563eb' }}
+                    name="Inscriptions"
+                    isAnimationActive={true}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Barre de recherche */}
       <Card>
