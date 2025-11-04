@@ -59,26 +59,7 @@ export default function EtudiantsPage() {
 
   // Supprimer un étudiant
   const handleDelete = async (etudiantId: string) => {
-    if (!confirm('Êtes-vous sûr de vouloir supprimer cet étudiant ?')) return;
-
-    try {
-      const res = await fetch('/api/airtable', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          tableName: 'Étudiants',
-          recordId: etudiantId,
-        }),
-      });
-
-      if (!res.ok) throw new Error('Erreur lors de la suppression');
-
-      toast.success('Étudiant supprimé avec succès');
-      refetch();
-    } catch (error) {
-      console.error('Erreur suppression:', error);
-      toast.error('Erreur lors de la suppression de l\'étudiant');
-    }
+    toast.error('Beta: Fonctionnalité de suppression désactivée par Mehdi Tebourbi');
   };
 
   // Ouvrir le dialog pour créer un nouvel étudiant

@@ -88,26 +88,7 @@ function SessionsPageContent() {
 
   // Supprimer une session
   const handleDelete = async (sessionId: string) => {
-    if (!confirm('Êtes-vous sûr de vouloir supprimer cette session ?')) return;
-
-    try {
-      const res = await fetch('/api/airtable', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          tableName: 'Sessions',
-          recordId: sessionId,
-        }),
-      });
-
-      if (!res.ok) throw new Error('Erreur lors de la suppression');
-
-      toast.success('Session supprimée avec succès');
-      refetch();
-    } catch (error) {
-      console.error('Erreur suppression:', error);
-      toast.error('Erreur lors de la suppression de la session');
-    }
+    toast.error('Beta: Fonctionnalité de suppression désactivée par Mehdi Tebourbi');
   };
 
   // Trouver le nom d'un cours par son ID

@@ -30,26 +30,7 @@ export function CourseTable({ courses, onEdit, onRefetch, onSort, sortColumn, so
   const router = useRouter();
 
   const handleDelete = async (coursId: string) => {
-    if (!confirm('Êtes-vous sûr de vouloir supprimer ce cours ?')) return;
-
-    try {
-      const res = await fetch('/api/airtable', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          tableName: 'Cours',
-          recordId: coursId,
-        }),
-      });
-
-      if (!res.ok) throw new Error('Erreur lors de la suppression');
-
-      toast.success('Cours supprimé avec succès');
-      if (onRefetch) onRefetch();
-    } catch (error) {
-      console.error('Erreur suppression:', error);
-      toast.error('Erreur lors de la suppression du cours');
-    }
+    toast.error('Beta: Fonctionnalité de suppression désactivée par Mehdi Tebourbi');
   };
 
   const columns: ColumnDef<AirtableRecord<CoursFields>>[] = [
